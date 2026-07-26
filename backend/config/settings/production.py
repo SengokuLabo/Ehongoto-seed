@@ -2,7 +2,8 @@ from .base import *
 
 DEBUG = False
 
-# HTTPS強制
+# HTTPS強制（Nginxがプロキシ経由でHTTPSを終端するため、ヘッダーで判定）
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
