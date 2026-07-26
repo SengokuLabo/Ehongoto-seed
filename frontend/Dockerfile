@@ -15,10 +15,6 @@ FROM node:20-slim AS production
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-CMD ["npx", "serve", "-s", "dist", "-l", "3000"]
+COPY --from=builder /app/dist ./dist
+RUN npm install -g serve
+CMD ["serve", "-s", "dist", "-l", "3000"]
