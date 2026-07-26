@@ -18,7 +18,7 @@ services:
       - static:/app/static
     env_file: .env
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
     depends_on:
       - db
     ports:
