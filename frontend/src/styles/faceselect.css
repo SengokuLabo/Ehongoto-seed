@@ -1,0 +1,59 @@
+.facesel-root {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #FFF8F2 0%, #FFF0E4 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 48px;
+  font-family: "Hiragino Maru Gothic Pro", "M PLUS Rounded 1c", "Yu Gothic", sans-serif;
+  color: #3D2B1F;
+}
+
+.back-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #B08860;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 16px;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: #704020; }
+
+.facesel-heading {
+  font-size: 1.1rem;
+  margin: 0 0 20px;
+  color: #3D2B1F;
+}
+
+.facesel-preview {
+  margin-bottom: 24px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(80, 40, 10, 0.18);
+}
+.facesel-preview canvas {
+  display: block;
+  border-radius: 6px;
+}
+
+.facesel-next {
+  margin-top: 24px;
+  padding: 14px 40px;
+  background: #E8A87A;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.facesel-next:hover {
+  background: #C06030;
+  transform: translateY(-2px);
+}
+.facesel-next:active { transform: translateY(0); }

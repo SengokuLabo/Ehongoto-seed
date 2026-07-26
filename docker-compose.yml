@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+      - ./media:/app/media
+      - static:/app/static
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    depends_on:
+      - db
+    ports:
+      - "8001:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file: frontend/.env
+    ports:
+      - "3000:3000"
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./media:/app/media
+      - static:/app/static
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  db_data:
+  static:

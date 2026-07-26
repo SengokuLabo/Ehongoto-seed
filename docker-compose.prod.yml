@@ -1,0 +1,31 @@
+# 本番環境：DBはRDS、メディアはEC2ローカル
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - media:/app/media
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    restart: always
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - media:/app/media
+    depends_on:
+      - backend
+      - frontend
+    restart: always
+
+volumes:
+  media:

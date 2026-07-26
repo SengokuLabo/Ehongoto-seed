@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "sass": "^1.99.0",
+    "sass-embedded": "^1.99.0"
+  },
+  "dependencies": {
+    "jspdf": "^4.2.1"
+  }
+}

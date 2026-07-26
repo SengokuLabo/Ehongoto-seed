@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+env/
+.venv/
+
+# Django
+*.log
+db.sqlite3
+
+# 環境変数
+.env
+.env.local
+.env.*.local
+
+# 認証情報
+nginx/.htpasswd
+
+# Node
+node_modules/
+dist/
+build/
+.npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+tools/
+
+# 内部資料配置ディレクトリ
+share/

@@ -1,0 +1,19 @@
+name: Security Check
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'  # 毎月1日 9時（UTC = 日本時間18時）
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  pip_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: pip install pip-audit bandit
+      - run: pip install -r backend/requirements.txt
+      - run: pip-audit
+      - run: bandit -r backend/apps/
