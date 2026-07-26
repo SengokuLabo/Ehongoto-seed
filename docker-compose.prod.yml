@@ -36,6 +36,7 @@ services:
     volumes:
       - ./media:/app/media
       - static:/app/static
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
       - frontend
