@@ -137,7 +137,7 @@ export default function QuestionForm() {
         <div className='q_lists'>
           <h2>質問</h2>
           <h3>{curChapter.title}</h3>
-          {curChapter.questions.map(q => (
+          {curChapter.questions.map((q, i) => (
             <div key={q.sort} className='q_list'>
               <h4><strong>Q{q.sort}.</strong> {q.text}</h4>
               <textarea
