@@ -141,6 +141,7 @@ export default function QuestionForm() {
             <div key={q.sort} className='q_list'>
               <h4><strong>Q{q.sort}.</strong> {q.text}</h4>
               <textarea
+                autoFocus={i === 0}
                 value={answers[`q${q.sort}`] || ''}
                 onChange={e => setAnswers(prev => ({...prev, [`q${q.sort}`]: e.target.value}))}
               />
