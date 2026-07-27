@@ -21,20 +21,20 @@ MAIL_SUBJECT_PRINT = 'えほんごとのたね |製本受付のご案内'
 @api_view(['GET'])
 def get_question(request):
   # 要求項目取得
-  client_name = request.GET.get('clientName')
-  theme_name = request.GET.get('themeName')
+  client = request.GET.get('client')
+  theme = request.GET.get('theme')
   year = request.GET.get('year')
 
   # バリデーションチェック
-  if not client_name:
+  if not client:
     return Response({'error': 'bad request'}, status=400)
-  client_obj = Client.objects.filter(name=client_name).first()
+  client_obj = Client.objects.filter(name=client).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=400)
 
-  if not theme_name:
+  if not theme:
     return Response({'error': 'bad request'}, status=400)
-  theme_obj = Theme.objects.filter(client=client_obj, name=theme_name, year=year).first()
+  theme_obj = Theme.objects.filter(client=client_obj, name=theme, year=year).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
 
