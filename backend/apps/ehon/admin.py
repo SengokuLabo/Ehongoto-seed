@@ -9,7 +9,8 @@ class ThemeInline(admin.TabularInline):
     'name',
     'year',
     'price_pdf',
-    'price_print',
+    'price_soft',
+    'price_hard',
     'prompt',
   )
   readonly_fields = (
