@@ -19,10 +19,10 @@ async function request(path, options = {}) {
 
 // 1. GET /api/questions
 // 質問取得
-export const getQuestions = (clientName, themeName, year) => {
+export const getQuestions = (client, theme, year) => {
   const params = new URLSearchParams({
-    clientName,
-    themeName,
+    client,
+    theme,
   })
   if (year) params.append('year', year)
   return request(`/questions?${params}`)
