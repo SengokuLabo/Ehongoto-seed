@@ -23,8 +23,8 @@ export default function Preview() {
   const [apiData, setApiData] = useState(null)
   const [apiErr, setApiErr] = useState(null)
 
-  let spreads = result?.spreads ?? mock.spreads
-  let faceParts = result?.face_parts ?? mock.face_parts
+  let spreads = result?.spreads ?? mock?.spreads ?? []
+  let faceParts = result?.face_parts ?? mock?.face_parts ?? []
 
   const W = useMemo(() => Math.min(Math.floor(window.innerWidth * 0.90), 720), [])   // プレビュー横幅
   const H = useMemo(() => Math.round(W * (507 / 720)), [W])                          // プレビュー高さ
