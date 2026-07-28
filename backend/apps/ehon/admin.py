@@ -248,7 +248,7 @@ class AnswerLogAdmin(admin.ModelAdmin):
     'created_at',
     'data',
   )
-  ordering = ('book',)
+  ordering = ('-created_at',)
   list_per_page = 30
 
 # 仮登録
