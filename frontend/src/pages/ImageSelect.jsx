@@ -94,7 +94,7 @@ export default function ImageSelect() {
           spread={spreads[step]}
           face={face}
           faceParts={faceParts}
-          isPreview={!isCover}
+          isPreview={!isCover && !lkToken}
         />
         {!isCover &&
           <div className='book_spine' />
