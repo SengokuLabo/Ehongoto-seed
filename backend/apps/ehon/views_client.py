@@ -13,7 +13,7 @@ from apps.common.mail_temp import client_add, client_verify, client_coupon
 # クーポンコード発行
 def gen_code():
   chars = string.ascii_uppercase + string.digits
-  rand = ''.join(secrets.choice(chars) for _ in range(8))
+  rand = ''.join(secrets.choice(chars) for _ in range(7))
   return f"EHG{rand}"
 
 

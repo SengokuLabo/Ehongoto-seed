@@ -55,6 +55,9 @@ export default function Client() {
               </tbody>
             </table>
           )}
+          {t.coupons.length === 0 && (
+            <p>テーマはまだありません</p>
+          )}
         </div>
       ))}
 
