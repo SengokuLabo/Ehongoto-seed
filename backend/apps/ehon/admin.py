@@ -70,6 +70,10 @@ class ClientAdmin(admin.ModelAdmin):
     'name',
     'email',
   )
+  readonly_fields = (
+    'chk_token',
+    'chk_exp',
+  )
   ordering = ('id',)
   list_per_page = 30
   inlines = [ThemeInline]
