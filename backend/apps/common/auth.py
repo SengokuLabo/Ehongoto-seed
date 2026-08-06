@@ -1,4 +1,5 @@
 import os, boto3
+from rest_framework.authentication import SessionAuthentication
 
 # メール送信
 def send_mail(to, subject, body_text, body_html, service_name, reply_to, logo_path=None):
@@ -33,3 +34,8 @@ def send_mail(to, subject, body_text, body_html, service_name, reply_to, logo_pa
         }
       }
     )
+
+# CSRFチェックなし
+class SessionAuth(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return

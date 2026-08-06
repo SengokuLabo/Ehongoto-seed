@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import BookCanvas from '../components/BookCanvas'
 import { mockData } from '../mock'
+import { couponUse } from '../api/client'
 
 const mock = import.meta.env.DEV ? mockData : null
 
@@ -12,6 +13,7 @@ export default function ImageSelect() {
   const { result, face } = location.state || {}
   const imgs = result?.images ?? mock.images
   const faceParts = result?.face_parts ?? mock.face_parts
+  const lkToken = location.state?.lkToken ?? ''
 
   const [spreads, setSpreads] = useState(() => {
     const raw = result?.spreads ?? mock.spreads
@@ -60,13 +62,25 @@ export default function ImageSelect() {
   }
 
   // Previewへ遷移
-  const handleNext = () => {
-    navigate('/preview', { state: { ...location.state, result: { ...result, spreads } } })
+  const handleNext = async () => {
+    if (lkToken) {
+      // クーポン使用時
+      try {
+        const res = await couponUse({ lk_token: lkToken, face, spreads, log_id: result?.log_id })
+        navigate('/preview', {state: { ...location.state, result: { ...result, spreads }, lkToken, dlUrl: res.dl_url }})
+      } catch (err) {
+        // エラー時は再度クーポン入力
+        navigate('/coupon', {state: { ...location.state, result: {...result, spreads} } })
+      }
+    } else {
+      // 通常時
+      navigate('/preview', { state: { ...location.state, result: { ...result, spreads } } })
+    }
   }
 
   // FaceSelectへ戻る
   const handlePre = () => {
-    navigate('/face', { state: { ...location.state, result: { ...result, spreads } } })
+    navigate('/face', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
   }
 
   return (

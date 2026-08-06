@@ -55,7 +55,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
   'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-  'DEFAULT_AUTHENTICATION_CLASSES': [],
+  'DEFAULT_AUTHENTICATION_CLASSES': ['apps.common.auth.SessionAuth',],
   'DEFAULT_PERMISSION_CLASSES': [],
 }
 
@@ -74,3 +74,9 @@ TEMPLATES = [{
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
+
+CORS_ALLOW_CREDENTIALS = True
+
+# セッション有効期限は、最終操作から3日間
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 3
+SESSION_SAVE_EVERY_REQUEST = True

@@ -8,11 +8,11 @@ from apps.common.auth import send_mail
 from apps.common.mail_temp import pdf_purchase, print_purchase, print_admin, contact_admin, contact_reply
 from .models import Client, Question, Style, Book, BookPage, Buyer, FacePart, Colors, Image, Theme, PendingBook, AnswerLog
 from .ai import generate_story
+from .views_client import _coupon_purchase
 
 # 詳細は docs/api-design.md 参照
 
 # 定数
-PAGE_NUM = 7
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 MAIL_SUBJECT_PDF = 'えほんごとのたね |ダウンロードリンクのご案内'
 MAIL_SUBJECT_PRINT = 'えほんごとのたね |製本受付のご案内'
@@ -182,7 +182,7 @@ def payment(request):
     mode='payment',
     success_url=f"{os.environ.get('FRONT_URL')}/ehon/{pending_obj.token}?{home}",
     cancel_url=f"{os.environ.get('FRONT_URL')}/purchase",
-    metadata={'token': str(pending_obj.token)},
+    metadata={'token': str(pending_obj.token), 'type': 'book'},
     customer_email=body.get('buyer', {}).get('email'),
   )
 
@@ -204,13 +204,26 @@ def callback(request):
   if event.get('type') != 'checkout.session.completed':
     return Response({'status': 'ignored'}, status=200)
 
-  # 2. pendingデータ取得
+  # 2. タイプ別後続処理に分岐
   session_obj = event.get('data', {}).get('object', {})
-  token = session_obj.get('metadata', {}).get('token', '')
+  type = session_obj.get('metadata', {}).get('type')
+  if type == 'book':
+    _book_purchase(session_obj)
+  elif type == 'coupon':
+    _coupon_purchase(session_obj)
+
+  # 3. Stripe に 200 返却
+  return Response({'detail': 'callback ok!'}, status=200)
+
+
+# 絵本購入後処理
+def _book_purchase(session_obj):
+  # 2. pendingデータ取得
   sp_pay_id = session_obj.get('id', '')
+  token = session_obj.get('metadata', {}).get('token', '')
   pending_obj = PendingBook.objects.filter(token=token).first()
   if not pending_obj:
-    return Response({'status': 'already processed'}, status=200)
+    return
   data = pending_obj.data
 
   # 3. DB保存
@@ -312,9 +325,6 @@ def callback(request):
       reply_to=book_obj.theme.client.email,
     )
 
-  # 5. Stripe に 200 返却
-  return Response({'detail': 'callback ok!'}, status=200)
-
 
 # 絵本データ取得 ※フロント側Canvasにて画像生成
 @api_view(['GET'])
@@ -412,7 +422,7 @@ def contact(request):
   # 自動返信
   send_mail(
     to=email,
-    subject=f'【お問い合わせ】 {TYPE_LABEL[type]} / {name}様',
+    subject=f'【えほんごとのたね】 {TYPE_LABEL[type]} / {name}様',
     body_text=body_text,
     body_html=None,
     service_name='えほんごとのたね',
@@ -423,7 +433,7 @@ def contact(request):
   body_text = contact_admin(name, TYPE_LABEL[type], email, message, tel, num, company)
   send_mail(
     to=os.environ.get('ADMIN_EMAIL'),
-    subject=f'【お問い合わせ】 {TYPE_LABEL[type]} / {name}様',
+    subject=f'【えほんごとのたね】 {TYPE_LABEL[type]} / {name}様',
     body_text=body_text,
     body_html=None,
     service_name='えほんごとのたね',
@@ -431,3 +441,23 @@ def contact(request):
   )
 
   return Response({'detail': 'mail ok'}, status=200)
+
+
+# テーマ一覧取得
+@api_view(['GET'])
+def get_themes(request):
+  # 1. バリデーション
+  client = request.GET.get('client')
+  client_obj = Client.objects.filter(name=client).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. テーマ一覧取得
+  theme_obj = Theme.objects.filter(client=client_obj).order_by('id')
+  theme_list = [{
+    'name': t.name,
+    'year': t.year,
+  } for t in theme_obj]
+
+  # レスポンス
+  return Response({'themes': theme_list}, status=200)

@@ -11,10 +11,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-# 許可するオリジン（wixとえほんごとのたね本番ドメインのみ）
+# 許可するオリジン（えほんごとのたね本番ドメインのみ）
 CORS_ALLOWED_ORIGINS = [
-    'https://maker.ehongoto.jp',
-    'https://www.ehongoto.jp',
+    'https://ehongoto-seed.com',
 ]
 
 SILENCED_SYSTEM_CHECKS = [

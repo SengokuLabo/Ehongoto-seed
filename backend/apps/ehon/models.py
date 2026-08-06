@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 import uuid
 
 # 詳細は docs/db-design.md 参照
@@ -56,9 +57,11 @@ class Buyer(models.Model):
 
 # クライアント情報
 class Client(models.Model):
+  user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
   name = models.CharField(max_length=100)
-  api_key = models.CharField(max_length=255, unique=True, blank=True, null=True)
   email = models.EmailField(unique=True)
+  chk_token = models.UUIDField(default=uuid.uuid4, unique=True)
+  chk_exp = models.DateTimeField(blank=True, null=True)
   logo = models.CharField(max_length=255, blank=True, default='')
   is_active = models.BooleanField(default=True)
   created_at = models.DateTimeField(auto_now_add=True)
@@ -184,7 +187,7 @@ class Book(models.Model):
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   def __str__(self):
-    return f'{self.theme} ({self.title} {self.buyer.name})'
+    return f'{self.title} ({self.buyer.name})'
   class Meta:
     verbose_name_plural = '10 books'
 
@@ -215,3 +218,26 @@ class PendingBook(models.Model):
   created_at = models.DateTimeField(auto_now_add=True)
   class Meta:
     verbose_name_plural = '99 pending books'
+
+# クーポン
+class Coupon(models.Model):
+  theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
+  code = models.CharField(max_length=10, unique=True)
+  max_uses = models.IntegerField(default=1)
+  rest_cnt = models.IntegerField(default=1)
+  valid_until = models.DateTimeField(blank=True, null=True)
+  sp_pay_id = models.CharField(max_length=255, blank=True, default='')
+  created_at = models.DateTimeField(auto_now_add=True)
+  class Meta:
+    verbose_name_plural = '30 coupons'
+
+# クーポン排他
+class LkCoupon(models.Model):
+  coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+  lk_token = models.UUIDField(default=uuid.uuid4, unique=True)
+  session = models.CharField(max_length=40)
+  name = models.CharField(max_length=100)
+  email = models.EmailField()
+  exp_at = models.DateTimeField()
+  class Meta:
+    verbose_name_plural = '31 lock coupons'

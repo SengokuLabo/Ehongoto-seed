@@ -25,6 +25,10 @@ dist/
 build/
 .npm
 
+# SCSSコンパイル生成物（Viteが直接SCSSを処理するため不要）
+*.css.map
+frontend/src/app.css
+
 # OS
 .DS_Store
 Thumbs.db

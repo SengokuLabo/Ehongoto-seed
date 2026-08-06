@@ -47,7 +47,6 @@ def pdf_purchase(book_obj, download_url):
   text = f'''
     *** えほんごとのたね🌱 ***
     {book_obj.theme.client.name}
-
     絵本タイトル：{book_obj.title}
 
     この度はご購入ありがとうございます。
@@ -162,6 +161,50 @@ def print_admin(buyer_obj, book_obj):
     お届け先：{buyer_obj.post} {buyer_obj.address}
     絵本ID：{book_obj.id}
     申し込み日時：{book_obj.created_at}
+  ''' + SIGNATURE_TEXT
+
+  return text
+
+
+# クライアント仮登録
+def client_add(name, url):
+  text = f'''
+    {name} 様
+
+    仮登録を受け付けました。
+    以下のURLから登録を完了してください。
+    登録確定後にテーマ作成について、改めてご連絡いたします。
+
+    ▼ 本登録URL
+    {url}
+
+  ''' + SIGNATURE_TEXT
+
+  return text
+
+
+# クライアント本登録通知（管理者宛）
+def client_verify(name, email, created_at):
+  text = f'''
+    新規クライアントの本登録が完了しました。
+    テーマ作成について、連絡お願いします。
+
+    お名前：{name}
+    メール：{email}
+    登録日時：{created_at}
+  ''' + SIGNATURE_TEXT
+
+  return text
+
+
+# クライアント クーポン購入時
+def client_coupon(name, email, theme):
+  text = f'''
+    クライアントからクーポン購入がありました。
+
+    お名前：{name}
+    メール：{email}
+    テーマ：{theme}
   ''' + SIGNATURE_TEXT
 
   return text

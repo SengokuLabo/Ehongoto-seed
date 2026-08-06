@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, Theme, Question, Style, FacePart, Colors, Image, Buyer, Book, BookPage, AnswerLog, PendingBook
+from .models import Client, Theme, Question, Style, FacePart, Colors, Image, Buyer, Book, BookPage, AnswerLog, PendingBook, Coupon, LkCoupon
 
 # インライン【テーマ】
 class ThemeInline(admin.TabularInline):
@@ -49,6 +49,13 @@ class BookPageInline(admin.TabularInline):
   readonly_fields = ('spread', 'text1', 'text2', 'img')
   show_change_link = True
 
+# インライン【クーポン排他】
+class LkCouponInline(admin.TabularInline):
+  model = LkCoupon
+  extra = 0
+  fields = ('name', 'email', 'exp_at', )
+  readonly_fields = ('name', 'email', 'exp_at', )
+  show_change_link = True
 
 # クライアント
 @admin.register(Client)
@@ -246,6 +253,7 @@ class BookPageAdmin(admin.ModelAdmin):
 class AnswerLogAdmin(admin.ModelAdmin):
   list_display = (
     'created_at',
+    'book',
     'data',
   )
   ordering = ('-created_at',)
@@ -261,4 +269,23 @@ class PendingBookAdmin(admin.ModelAdmin):
   ordering = ('created_at',)
   list_per_page = 30
 
-
+# クーポン
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+  list_display = (
+    'client_name',
+    'theme_name',
+    'code',
+    'max_uses',
+    'rest_cnt',
+    'valid_until',
+    'created_at',
+  )
+  list_filter = ('theme__client', 'theme')
+  ordering = ('created_at', 'theme',)
+  def client_name(self, obj):
+    return obj.theme.client.name if obj.theme.client else ''
+  client_name.short_description = 'クライアント'
+  def theme_name(self, obj):
+    return obj.theme.name if obj.theme else ''
+  theme_name.short_description = 'テーマ'

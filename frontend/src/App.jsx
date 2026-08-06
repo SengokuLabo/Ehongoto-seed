@@ -8,6 +8,12 @@ import Purchase from './pages/Purchase'
 import Contact from './pages/Contact'
 import FaceConfig from './pages/FaceConfig'
 import ContactForm from './components/ContactForm'
+import Themes from './pages/Themes'
+import Coupon from './pages/Coupon'
+import Client from './pages/Client'
+import ClientAdd from './pages/ClientAdd'
+import ClientLogin from './pages/ClientLogin'
+import ClientCoupon from './pages/ClientCoupon'
 import './reset.scss'
 import './app.scss'
 
@@ -20,8 +26,8 @@ export default function App() {
 
       <div className='main'>
         <Routes>
-          {/* 質問回答 */}
-          <Route path='/' element={<QuestionForm />} />
+          {/* テーマ一覧 or 質問回答 */}
+          <Route path='/' element={<TopPage />} />
           {/* 顔パーツ選択 */}
           <Route path='/face' element={<FaceSelect />} />
           {/* 画像選択 */}
@@ -36,12 +42,32 @@ export default function App() {
           <Route path='/contact' element={<Contact />} />
           {/* 顔パーツ配置設定（管理用） */}
           <Route path='/face_config' element={<FaceConfig />} />
+
+          {/* クーポン入力 */}
+          <Route path='/coupon' element={<Coupon />} />
+
+          {/* クライアント ダッシュボード */}
+          <Route path='/client' element={<Client />} />
+          {/* クライアント 仮登録 */}
+          <Route path='/client/add' element={<ClientAdd />} />
+          {/* クライアント ログイン */}
+          <Route path='/client/login' element={<ClientLogin />} />
+          {/* クライアント クーポン購入 */}
+          <Route path='/client/coupon' element={<ClientCoupon />} />
+
         </Routes>
       </div>
 
       <Footer />
     </>
   )
+}
+
+// ホーム画面分岐処理
+function TopPage() {
+  const [searchParams] = useSearchParams()
+  const theme = searchParams.get('theme')
+  return theme ? <QuestionForm /> : <Themes />
 }
 
 // ページトップにスクローク

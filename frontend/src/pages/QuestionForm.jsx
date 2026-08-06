@@ -15,6 +15,7 @@ export default function QuestionForm() {
   const [genError, setGenError] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [paramError, setParamError] = useState(false)
+  const lkToken = location.state?.lkToken ?? ''
 
   // パラメータ取得
   const [searchParams] = useSearchParams()
@@ -101,7 +102,7 @@ export default function QuestionForm() {
   const handleGenerate = async () => {
     // すでにgenerate処理後で入力更新されていない場合
     if (!hasChanged && location.state?.result) {
-      navigate('/face', { state: { ...location.state, answers, styleSelections } })
+      navigate('/face', { state: { ...location.state, answers, styleSelections, lkToken } })
       return
     }
 
@@ -115,7 +116,7 @@ export default function QuestionForm() {
         styles: styleSelections,
       })
       // FaceSelectへ遷移
-      navigate('/face', {state: {search: location.search, result, answers, styleSelections}})
+      navigate('/face', {state: {search: location.search, result, answers, styleSelections, lkToken}})
     } catch (err) {
       setGenError('生成に失敗しました。もう一度お試しください')
     } finally {

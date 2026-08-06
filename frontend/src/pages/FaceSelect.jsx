@@ -21,6 +21,7 @@ export default function FaceSelect() {
   const hairColors = result?.hair_colors ?? mock.hair_colors
   const skinColors = result?.skin_colors ?? mock.skin_colors
   const previewRef = useRef(null)
+  const lkToken = location.state?.lkToken ?? ''
 
   const [face, setFace] = useState(
     location.state?.face ?? {
@@ -72,12 +73,12 @@ export default function FaceSelect() {
 
   // ImageSelectへ遷移
   const handleNext = () => {
-    navigate('/image', { state: { ...location.state, face } })
+    navigate('/image', { state: { ...location.state, face, lkToken } })
   }
 
   // QuestionFormへ戻る
   const handlePre = () => {
-    navigate('/' + (location.state?.search ?? ''), { state: { ...location.state, face } })
+    navigate('/' + (location.state?.search ?? ''), { state: { ...location.state, face, lkToken } })
   }
 
   return (

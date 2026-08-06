@@ -34,7 +34,8 @@ export default function Preview() {
   const [dir, setDir] = useState('next')      // (next, prev)
   const [wrapW, setWrapW] = useState(0)       // カード親要素幅
   const isCover = (s) => s === 0              // 表紙
-  const isPreview = !token                    // モザイク判定
+  const lkToken = location.state?.lkToken ?? ''
+  const isPreview = !token && !lkToken        // モザイク判定
   const canvasRefs = useRef({})               // canvas要素
   const readyMap = useRef({})                 // 描画完了フラグ
   const flipFrontRef = useRef(null)           // カード表面のcanvas
@@ -168,7 +169,7 @@ export default function Preview() {
         <h4>ご購入ありがとうございます。</h4>
         <div className='btns_dl'>
           <button className='btn_dl' onClick={generatePdf} disabled={pdfLoading}
-            style={{display: token ? 'inline-block' : 'none'}}
+            style={{display: (token || lkToken) ? 'inline-block' : 'none'}}
           >
             {pdfLoading ? '生成中．．．' : 'PDFダウンロード'}
           </button>
