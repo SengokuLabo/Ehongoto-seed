@@ -1,24 +1,6 @@
 import { drawFace } from "./drawFace"
 import { parseMask } from "./parseMask"
 
-// テキスト折り返し
-function wrapText(ctx, text, x, y, maxW, lineH) {
-  if (!text) return
-  let line = ''
-  let curY = y
-  for (let i = 0; i < text.length; i++) {
-    const test = line + text[i]
-    if (ctx.measureText(test).width > maxW && line.length > 0) {
-      ctx.fillText(line, x, curY)
-      line = text[i]
-      curY += lineH
-    } else {
-      line = test
-    }
-  }
-  ctx.fillText(line, x, curY)
-}
-
 // ウォーターマーク描写
 function drawWatermark(ctx, W, H) {
   ctx.save()
@@ -68,7 +50,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // 画像を非同期ロード
 function loadImage(src) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new window.Image()
     img.onload = () => resolve(img)
     img.onerror = () => resolve(null)
@@ -79,17 +61,56 @@ function loadImage(src) {
 // テキストを行ごとに分割
 function splitLines(ctx, text, maxW) {
   const lines = []
-  let line = ''
-  for (let i = 0; i < text.length; i++) {
-    const test = line + text[i]
-    if (ctx.measureText(test).width > maxW && line.length > 0) {
-      lines.push(line)
-      line = text[i]
+  const words = []
+  const raw = text.split(' ')
+  let i = 0
+  while (i < raw.length) {
+    if (raw[i].length === 1 && i + 1 < raw.length) {
+      words.push(raw[i] + ' ' + raw[i + 1])
+      i += 2
     } else {
-      line = test
+      words.push(raw[i])
+      i++
+    }
+  }
+  let line = ''
+  for (const word of words) {
+    const wordW = ctx.measureText(word).width
+    if (wordW > maxW) {
+      if (line) { lines.push(line); line = '' }
+      const numLines = Math.round(wordW / (maxW * 0.7))
+      const targetW = wordW / numLines
+      let cur = ''
+      for (const char of [...word]) {
+        const test = cur + char
+        if (ctx.measureText(test).width > targetW && cur.length > 0) {
+          lines.push(cur)
+          cur = char
+        } else {
+          cur = test
+        }
+      }
+      if (cur) lines.push(cur)
+      line = ''
+    } else {
+      const test = line ? line + ' ' + word : word
+      if (ctx.measureText(test).width > maxW && line.length > 0) {
+        lines.push(line)
+        line = word
+      } else {
+        line = test
+      }
     }
   }
   if (line) lines.push(line)
+
+  // 2文字以下の行を前の行に吸収
+  for (let i = lines.length - 1; i >= 1; i--) {
+    if ([...lines[i]].length <= 2) {
+      lines[i - 1] += lines[i]
+      lines.splice(i, 1)
+    }
+  }
   return lines
 }
 
@@ -195,12 +216,17 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview) {
       // 半透明領域
       const pad = 8
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
-      roundRect(ctx, x - pad, y - fontSize - pad, zoneW + pad * 2, zoneH + pad * 2, 6)
+      const actualW = Math.max(...lines.map(l => ctx.measureText(l).width))
+      const rectX = x + zoneW / 2 - actualW / 2 - pad
+      const rectW = actualW + pad * 2
+      roundRect(ctx, rectX, y - fontSize - pad, rectW, zoneH + pad * 2, 6)
       ctx.fill()
 
       // テキスト
       ctx.fillStyle = fontColor
-      wrapText(ctx, text, x + zoneW / 2, y, zoneW, lineH)
+      lines.forEach((line, j) => {
+        ctx.fillText(line, x + zoneW / 2, y + j * lineH)
+      })
     })
   }
 

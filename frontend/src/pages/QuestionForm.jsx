@@ -185,9 +185,18 @@ export default function QuestionForm() {
         >
           {generating ? '生成中．．．' : isLastStep ? '生成する' : '次へ'}
         </button>
-        {/* エラー表示 */}
-        {genError && <p className='error'>{genError}</p>}
       </div>
+
+      {/* ローディング描写 */}
+      {generating && (
+        <div className='pdf_modal'>
+          <div className='spinner'></div>
+          <p>物語を生成中．．．</p>
+        </div>
+      )}
+
+      {/* エラー表示 */}
+      {genError && <p className='error'>{genError}</p>}
 
       {/* 入力チェックモーダル */}
       {showConfirm && (

@@ -441,6 +441,10 @@ button {
   max-width: 50rem;
 }
 
+.error {
+  text-align: center;
+}
+
 
 // -------------- QuestionForm --------------
 .q_lists {
@@ -734,6 +738,10 @@ button {
   justify-content: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.5);
+
+  p {
+    text-shadow: 0 0 4px #fff, 0 0 4px #fff;
+  }
 }
 
 .spinner {

@@ -225,7 +225,7 @@ class BookAdmin(admin.ModelAdmin):
     'book_type',
     'status',
   )
-  ordering = ('theme', 'buyer', 'book_type')
+  ordering = ('created_at', )
   list_per_page = 30
   def theme_name(self, obj):
     return obj.theme.name if obj.theme else ''

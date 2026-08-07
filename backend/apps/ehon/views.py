@@ -105,8 +105,8 @@ def generate(request):
 
   return Response({
     'theme': theme_obj.name,
-    'title': result.get('spreads')[0]['text1'],
-    'spreads': result.get('spreads'),
+    'title': result[0]['text1'],
+    'spreads': result,
     'face_parts': face_parts,
     'hair_colors': list(hair_colors.values('label', 'color')),
     'skin_colors': list(skin_colors.values('label', 'color')),
