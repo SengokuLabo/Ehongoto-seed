@@ -42,6 +42,7 @@ export default function Purchase() {
       // result [ck_url]
       const ckResult = await payment({
         type: type,
+        client: result?.client,
         theme: result?.theme,
         buyer: {
           name: `${fName} ${eName}`,

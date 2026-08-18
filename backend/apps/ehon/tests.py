@@ -496,27 +496,33 @@ class GenerateTest(TestCase):
   @patch('apps.ehon.views.generate_story')
   def test_ok_with_face(self, mock_gen):
     mock_gen.return_value = self.mock_result
-    res = self.api.post(self.url, {'theme': '顔ありテーマ', 'answers': self.answers}, format='json')
+    res = self.api.post(self.url, {'client': '生成テスト社', 'theme': '顔ありテーマ', 'answers': self.answers}, format='json')
     self.assertEqual(res.status_code, 200)
     self.assertNotEqual(res.data.get('face_parts'), {})
 
   @patch('apps.ehon.views.generate_story')
   def test_ok_no_face(self, mock_gen):
     mock_gen.return_value = self.mock_result
-    res = self.api.post(self.url, {'theme': '顔なしテーマ', 'answers': self.answers}, format='json')
+    res = self.api.post(self.url, {'client': '生成テスト社', 'theme': '顔なしテーマ', 'answers': self.answers}, format='json')
     self.assertEqual(res.status_code, 200)
     self.assertEqual(res.data.get('face_parts'), {})
 
   @patch('apps.ehon.views.generate_story')
+  def test_no_client(self, mock_gen):
+    mock_gen.return_value = self.mock_result
+    res = self.api.post(self.url, {'theme': '顔なしテーマ', 'answers': self.answers}, format='json')
+    self.assertEqual(res.status_code, 400)
+
+  @patch('apps.ehon.views.generate_story')
   def test_no_theme(self, mock_gen):
     mock_gen.return_value = self.mock_result
-    res = self.api.post(self.url, {'theme': '存在しないテーマ', 'answers': self.answers}, format='json')
+    res = self.api.post(self.url, {'client': '生成テスト社', 'theme': '存在しないテーマ', 'answers': self.answers}, format='json')
     self.assertEqual(res.status_code, 400)
 
   @patch('apps.ehon.views.generate_story')
   def test_no_answers(self, mock_gen):
     mock_gen.return_value = self.mock_result
-    res = self.api.post(self.url, {'theme': '顔なしテーマ'}, format='json')
+    res = self.api.post(self.url, {'client': '生成テスト社', 'theme': '顔なしテーマ'}, format='json')
     self.assertEqual(res.status_code, 400)
 
 

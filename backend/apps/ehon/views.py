@@ -66,8 +66,12 @@ def generate(request):
   except json.JSONDecodeError:
     return Response({'error': 'bad request'}, status=400)
 
+  # クライアント取得
+  client_obj = models.Client.objects.filter(name=body.get('client')).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=400)
   # テーマ取得
-  theme_obj = models.Theme.objects.filter(name = body.get('theme')).first()
+  theme_obj = models.Theme.objects.filter(client=client_obj, name=body.get('theme')).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
   answers = body.get('answers')
@@ -117,6 +121,7 @@ def generate(request):
   }
 
   return Response({
+    'client': client_obj.name,
     'theme': theme_obj.name,
     'title': result[0]['text1'],
     'spreads': result,
@@ -150,7 +155,10 @@ def payment(request):
   types = [t[0] for t in models.Book.BOOK_TYPE]
   if type not in types:
     return Response({'error': 'bad request'}, status=400)
-  theme_obj = models.Theme.objects.filter(name=body.get('theme')).first()
+  client_obj = models.Client.objects.filter(name=body.get('client')).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=400)
+  theme_obj = models.Theme.objects.filter(client=client_obj, name=body.get('theme')).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
   buyer = body.get('buyer')

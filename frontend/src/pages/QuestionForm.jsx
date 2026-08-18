@@ -118,6 +118,7 @@ export default function QuestionForm() {
     try {
       // result [theme, title, pages, face_parts, hair_colors, skin_colors, images]
       const result = await generate({
+        client: client,
         theme: theme,
         answers,
         styles: styleSelections,
