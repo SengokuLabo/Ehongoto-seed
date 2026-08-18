@@ -176,45 +176,57 @@ function Footer() {
   }, [])
 
   return (
-    <div className='footer'>
-      <ul>
-        <li>
-          <button className='btn_home' onClick={() => setIsDialog(true)}
-            style={{cursor: location.pathname == '/' ? 'default' : 'pointer'}}
-          >
-            <div className='footer_icon'>
-              <img src='/media/EhongotoSeed.png' alt='EhongotoSeed' />
-            </div>
-            <h4>えほんごとのたね</h4>
-            <p>ホーム</p>
-          </button>
-        </li>
-        <li>
-          <button onClick={() => setIsContact(true)} disabled={location.pathname == '/contact'}>お問い合わせ</button>
-        </li>
-        <li><a href='https://sengoku-labo.com/legal.php' target='_blank' rel='noopener noreferrer'>
-          特定商取引法
-        </a></li>
-      </ul>
+    <>
+      {/* えほんごと */}
+      <div className='ehongoto'>
+        <h4>もっと深く、伝えたい想いへ</h4>
+        <p>あなたの想いをじっくり伺い<br />物語も絵も、世界にひとつの一冊をつくります</p>
+        <a href='https://www.ehongoto.jp' target='_blank' rel='noreferror'>
+          <img src='/media/EHONGOTO.png' alt='EHONGOTO' />
+        </a>
+      </div>
 
-      <h5>©️2026 センゴクラボ</h5>
+      {/* フッター */}
+      <div className='footer'>
+        <ul>
+          <li>
+            <button className='btn_home' onClick={() => setIsDialog(true)}
+              style={{cursor: location.pathname == '/' ? 'default' : 'pointer'}}
+            >
+              <div className='footer_icon'>
+                <img src='/media/EhongotoSeed.png' alt='EhongotoSeed' />
+              </div>
+              <h4>えほんごとのたね</h4>
+              <p>ホーム</p>
+            </button>
+          </li>
+          <li>
+            <button onClick={() => setIsContact(true)} disabled={location.pathname == '/contact'}>お問い合わせ</button>
+          </li>
+          <li><a href='https://sengoku-labo.com/legal.php' target='_blank' rel='noopener noreferrer'>
+            特定商取引法
+          </a></li>
+        </ul>
 
-      {/* 問い合わせモーダル */}
-      {isContact &&
-        <ContactForm
-          isModal={true}
-          onClose={() => setIsContact(false)}
-        />
-      }
+        <h5>©️2026 センゴクラボ</h5>
 
-      {/* ホームへ戻る際のダイアログ */}
-      {isDialog && location.pathname != '/' &&
-        <HomeDialog
-          onOk={() => { setIsDialog(false); navigate(home) }}
-          onCancel={() => setIsDialog(false)}
-        />
-      }
-    </div>
+        {/* 問い合わせモーダル */}
+        {isContact &&
+          <ContactForm
+            isModal={true}
+            onClose={() => setIsContact(false)}
+          />
+        }
+
+        {/* ホームへ戻る際のダイアログ */}
+        {isDialog && location.pathname != '/' &&
+          <HomeDialog
+            onOk={() => { setIsDialog(false); navigate(home) }}
+            onCancel={() => setIsDialog(false)}
+          />
+        }
+      </div>
+    </>
   )
 }
 

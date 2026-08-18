@@ -417,8 +417,23 @@ table {
 }
 
 // -------------- Footer --------------
-.footer {
+.ehongoto{
   margin-top: 8rem;
+  padding: 8rem 0;
+  text-align: center;
+  background: rgb(83, 182, 191);
+
+  h4 {
+    margin-bottom: 2rem;
+  }
+
+  img {
+    width: 20rem;
+    margin: 3rem auto 0 auto;
+  }
+}
+
+.footer {
   padding: 5rem 0;
   text-align: center;
   background: #f5f5f5;
@@ -952,6 +967,10 @@ table {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.theme_head_price {
+  text-align: center;
 }
 
 .coupon_ng {

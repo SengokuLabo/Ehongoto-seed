@@ -185,7 +185,7 @@ function CheckModal({ onClose }) {
       aria-label="購入確認"
     >
       <div className='modal modal_purchase' onClick={(e) => e.stopPropagation()}>
-        <button className="modal_close" onClick={onClose} aria-label="閉じる">×</button>
+        <button className="modal_close" onClick={onClose} aria-label="閉じる">✖︎</button>
         <h3>購入確認</h3>
 
         <div className="check_thumb">

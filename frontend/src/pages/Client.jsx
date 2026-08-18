@@ -78,11 +78,12 @@ export default function Client() {
           <div className='theme_head'>
             <h3><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
 
-            <p>PDF価格：{t.pdf} 円</p>
-
-            <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
-              クーポン購入
-            </button>
+            <div className='theme_head_price'>
+              <p>PDF価格：{t.pdf} 円</p>
+              <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
+                クーポン購入
+              </button>
+            </div>
           </div>
 
           {t.coupons.length > 0 && (

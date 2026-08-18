@@ -65,7 +65,7 @@ export default function ContactForm({ isModal, onClose }) {
       aria-label='お問い合わせ'
     >
       <div className={isModal ? 'modal modal_contact' : ''} onClick={(e) => e.stopPropagation()}>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる' hidden={!isModal}>×</button>
+        <button className='modal_close' onClick={onClose} aria-label='閉じる' hidden={!isModal}>✖︎</button>
         <h3>お問い合わせ</h3>
         <h5>お問い合わせ内容を選択ください</h5>
         <div className='contact_type'>
