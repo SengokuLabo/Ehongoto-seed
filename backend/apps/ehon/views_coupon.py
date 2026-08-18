@@ -117,7 +117,7 @@ def coupon_use(request):
     theme=lk_coupon_obj.coupon.theme,
     title=spreads[0].get('text1', ''),
     book_type=Book.TYPE_PDF,
-    status=Book.STATUS_PAID,
+    status=Book.STATUS_COUPON,
     price=lk_coupon_obj.coupon.theme.price_pdf,
     pdf_exp=timezone.now() + timedelta(days=30),
     hair=hair,

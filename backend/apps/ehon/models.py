@@ -189,22 +189,20 @@ class Book(models.Model):
     (TYPE_SOFT, '小冊子'),
     (TYPE_HARD, 'ハードカバー'),
   ]
-  STATUS_NOPAID = 'no_paid'
-  STATUS_PAID = 'paid'
-  STATUS_EXPIRED = 'expired'
-  STATUS_ORDERED = 'ordered'
+  STATUS_STRIPE = 'stripe'
+  STATUS_PAYPAY = 'paypay'
+  STATUS_COUPON = 'coupon'
   BOOK_STATUS = [
-    (STATUS_NOPAID, '未払い'),
-    (STATUS_PAID, '支払済み'),
-    (STATUS_EXPIRED, '期限切れ'),
-    (STATUS_ORDERED, '製本依頼済み'),
+    (STATUS_STRIPE, 'Stripe購入'),
+    (STATUS_PAYPAY, 'PayPay購入'),
+    (STATUS_COUPON, 'クーポン使用'),
   ]
   token = models.UUIDField(default=uuid.uuid4, unique=True)
   buyer = models.ForeignKey(Buyer, on_delete=models.PROTECT)
   theme = models.ForeignKey(Theme, on_delete=models.PROTECT)
   title = models.CharField(max_length=100)
   book_type = models.CharField(max_length=10, choices=BOOK_TYPE, default=TYPE_PDF)
-  status = models.CharField(max_length=10, choices=BOOK_STATUS, default=STATUS_NOPAID)
+  status = models.CharField(max_length=10, choices=BOOK_STATUS, default=STATUS_STRIPE)
   price = models.IntegerField(default=0)
   sp_pay_id = models.CharField(max_length=255, blank=True, default='')
   pdf_key = models.CharField(max_length=255, blank=True, default='')

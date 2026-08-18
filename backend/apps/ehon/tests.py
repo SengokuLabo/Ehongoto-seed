@@ -564,7 +564,7 @@ class CallbackTest(TestCase):
 
   @patch.dict(os.environ, {'FRONT_URL': 'http://localhost'})
   @patch('apps.ehon.views.send_mail')
-  @patch('apps.ehon.views.stripe')
+  @patch('apps.ehon.views_pay.stripe')
   def test_book_with_face(self, mock_stripe, mock_mail):
     mock_stripe.error.SignatureVerificationError = stripe_mod.error.SignatureVerificationError
     pending = PendingBook.objects.create(data={
@@ -580,7 +580,7 @@ class CallbackTest(TestCase):
 
   @patch.dict(os.environ, {'FRONT_URL': 'http://localhost'})
   @patch('apps.ehon.views.send_mail')
-  @patch('apps.ehon.views.stripe')
+  @patch('apps.ehon.views_pay.stripe')
   def test_book_no_face(self, mock_stripe, mock_mail):
     mock_stripe.error.SignatureVerificationError = stripe_mod.error.SignatureVerificationError
     pending = PendingBook.objects.create(data={
