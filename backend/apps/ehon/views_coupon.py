@@ -83,7 +83,7 @@ def coupon_use(request):
   lk_token = body.get('lk_token')
   face = body.get('face')
   spreads = body.get('spreads')
-  if not lk_token or not face or not spreads:
+  if not lk_token or not spreads:
     return Response({'error': 'bad request'}, status=400)
 
   lk_coupon_obj = LkCoupon.objects.filter(lk_token=lk_token).first()
@@ -106,12 +106,12 @@ def coupon_use(request):
   )
 
   # book登録
-  hair = FacePart.objects.filter(id=face.get('hair')).first()
-  eye = FacePart.objects.filter(id=face.get('eye')).first()
-  nose = FacePart.objects.filter(id=face.get('nose')).first()
-  mouth = FacePart.objects.filter(id=face.get('mouth')).first()
-  hair_color = Colors.objects.filter(color=face.get('hairColor')).first()
-  skin_color = Colors.objects.filter(color=face.get('skinColor')).first()
+  hair = FacePart.objects.filter(id=face.get('hair')).first() if face else None
+  eye = FacePart.objects.filter(id=face.get('eye')).first() if face else None
+  nose = FacePart.objects.filter(id=face.get('nose')).first() if face else None
+  mouth = FacePart.objects.filter(id=face.get('mouth')).first() if face else None
+  hair_color = Colors.objects.filter(color=face.get('hairColor')).first() if face else None
+  skin_color = Colors.objects.filter(color=face.get('skinColor')).first() if face else None
   book_obj = Book.objects.create(
     buyer=buyer_obj,
     theme=lk_coupon_obj.coupon.theme,

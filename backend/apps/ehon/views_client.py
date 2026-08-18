@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login as auth_login
-from .models import Client, User, Theme, Coupon
+from . import models
 from apps.common.auth import send_mail
 from apps.common.mail_temp import client_add, client_verify, client_coupon
 
@@ -32,22 +32,22 @@ def add(request):
   client_name = body.get('client_name')
   if not name or not email or not password or not client_name:
     return Response({'error': 'bad request'}, status=400)
-  if User.objects.filter(email=email).exists():
+  if models.User.objects.filter(email=email).exists():
     return Response({'error': 'already exists'}, status=409)
 
-  if Client.objects.filter(name=client_name).exists():
+  if models.Client.objects.filter(name=client_name).exists():
     return Response({'error': 'already exists'}, status=409)
 
   # 2. クライアント作成
   with transaction.atomic():
-    user_obj = User.objects.create_user(
+    user_obj = models.User.objects.create_user(
       username=email,
       email=email,
       password=password,
       is_active=False,
     )
 
-    client_obj = Client.objects.create(
+    client_obj = models.Client.objects.create(
       user=user_obj,
       name=client_name,
       email=email,
@@ -74,7 +74,7 @@ def add(request):
 @api_view(['GET'])
 def verify(request, token):
   # 1. バリデーション
-  client_obj = Client.objects.filter(chk_token=token).first()
+  client_obj = models.Client.objects.filter(chk_token=token).first()
   if not client_obj or not client_obj.user:
     return Response({'error': 'client not found'}, status=404)
 
@@ -98,6 +98,7 @@ def verify(request, token):
 
   # 4. ログイン画面にリダイレクト
   return redirect(f"{os.environ.get('FRONT_URL')}/client/login")
+
 
 # クライアント ログイン
 @api_view(['POST'])
@@ -131,17 +132,29 @@ def themes(request):
   # 1. バリデーション
   if not request.user.is_authenticated:
     return Response({'error': 'bad request'}, status=401)
-  client_obj = Client.objects.filter(user=request.user).first()
+  client_obj = models.Client.objects.filter(user=request.user).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=401)
 
-  # 2. テーマ取得
-  themes_obj = Theme.objects.filter(client=client_obj).prefetch_related('coupon_set')
+  # 2. サブスク取得
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).order_by('-start_at').first()
+  c_subsc = {
+    'status': c_subsc_obj.status,
+    'plan': c_subsc_obj.subsc.name,
+    'start_at': c_subsc_obj.start_at,
+  } if c_subsc_obj else None
+
+  c_dist_obj = models.CouponDist.objects.filter(client_subsc=c_subsc_obj) if c_subsc_obj else {}
+  c_dist = {d.theme_id: d.coupon_cnt for d in c_dist_obj} if c_dist_obj else {}
+
+  # 3. テーマ取得
+  themes_obj = models.Theme.objects.filter(client=client_obj).prefetch_related('coupon_set')
   theme_list = [{
     'id': t.id,
     'name': t.name,
     'year': t.year,
     'pdf': t.price_pdf,
+    'coupon_cnt': c_dist.get(t.id),
     'coupons': [{
       'code': c.code,
       'max_uses': c.max_uses,
@@ -151,7 +164,12 @@ def themes(request):
   } for t in themes_obj]
 
   # レスポンス
-  return Response({'themes': theme_list}, status=200)
+  return Response({
+    'client': client_obj.name,
+    'themes': theme_list,
+    'subsc': c_subsc,
+    'is_free': client_obj.is_free,
+  }, status=200)
 
 
 # クライアント クーポン購入 決済要求
@@ -167,12 +185,12 @@ def coupon_payment(request):
     return Response({'error': 'bad request'}, status=400)
 
   theme_id = body.get('theme_id')
-  client_obj = Client.objects.filter(user=request.user).first()
+  client_obj = models.Client.objects.filter(user=request.user).first()
   count = body.get('count')
   if not theme_id or not client_obj or not count:
     return Response({'error': 'bad request'}, status=400)
 
-  theme_obj = Theme.objects.filter(id=theme_id, client=client_obj).first()
+  theme_obj = models.Theme.objects.filter(id=theme_id, client=client_obj).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
 
@@ -204,12 +222,12 @@ def _coupon_purchase(session_obj):
   sp_pay_id = session_obj.get('id', '')
   theme_id = session_obj.get('metadata', {}).get('theme_id', '')
   count = session_obj.get('metadata', {}).get('count', '')
-  theme_obj = Theme.objects.filter(id=theme_id).first()
+  theme_obj = models.Theme.objects.filter(id=theme_id).first()
   if not theme_obj:
     return
 
   # 2. クーポン生成
-  Coupon.objects.create(
+  models.Coupon.objects.create(
     theme=theme_obj,
     code=gen_code(),
     max_uses=int(count),
@@ -228,3 +246,174 @@ def _coupon_purchase(session_obj):
     service_name='えほんごとのたね',
     reply_to=os.environ.get('ADMIN_EMAIL')
   )
+
+
+# サブスク一覧取得
+@api_view(['GET'])
+def subsc_plan(request):
+  plans = models.Subsc.objects.order_by('price').all()
+  return Response([{
+    'id': p.id,
+    'name': p.name,
+    'price': p.price,
+    'base_cnt': p.base_cnt,
+  } for p in plans], status=200)
+
+
+# サブスク登録
+@api_view(['POST'])
+def subsc_signup(request):
+  # 1. バリデーション
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  subsc_id = body.get('subsc_id')
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not subsc_id or not client_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 既存のアクティブサブスクをチェック
+  if models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).exists():
+    return Response({'error': 'bad request'}, status=400)
+
+  subsc_obj = models.Subsc.objects.filter(id=subsc_id).first()
+  if not subsc_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. stripeセッション作成
+  session = stripe.checkout.Session.create(
+    payment_method_types=['card'],
+    line_items=[{'price': subsc_obj.sp_price_id, 'quantity': 1}],
+    mode='subscription',
+    subscription_data={'trial_period_days': 30},
+    success_url=f"{os.environ.get('FRONT_URL')}/client",
+    cancel_url=f"{os.environ.get('FRONT_URL')}/client/subsc",
+    metadata={'type': 'subsc', 'client_id': str(client_obj.id), 'subsc_id': str(subsc_obj.id)},
+    customer_email=client_obj.email,
+  )
+
+  # レスポンス
+  return Response({'ck_url': session.url}, status=200)
+
+
+# サブスク登録後処理
+def _subsc_signup(obj):
+  client_id = obj.get('metadata', {}).get('client_id')
+  subsc_id = obj.get('metadata', {}).get('subsc_id')
+  sp_sub_id = obj.get('subscription', '')
+  client_obj = models.Client.objects.filter(id=client_id).first()
+  subsc_obj = models.Subsc.objects.filter(id=subsc_id).first()
+  if not client_obj or not subsc_obj:
+    return
+  models.ClientSubsc.objects.create(
+    client=client_obj,
+    subsc=subsc_obj,
+    sp_sub_id=sp_sub_id,
+    status=models.ClientSubsc.SUBSC_ACTIVE,
+  )
+
+
+# サブスクキャンセル
+@api_view(['POST'])
+def subsc_cancel(request):
+  # 1. バリデーション
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  # 2. サブスク情報取得
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  c_subsc_obj = models.ClientSubsc.objects.filter(
+    client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE
+  ).first()
+  if not c_subsc_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 3. stripe処理
+  stripe.Subscription.modify(c_subsc_obj.sp_sub_id, cancel_at_period_end=True)
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)
+
+
+# サブスクキャンセル後処理
+def _subsc_deleted(obj):
+  sp_sub_id = obj.get('id', '')
+  models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).update(
+    status=models.ClientSubsc.SUBSC_CANCEL,
+    end_at=timezone.now(),
+  )
+
+
+# サブスクプラン更新後処理
+def _subsc_update(obj):
+  sp_sub_id = obj.get('id', '')
+  status = obj.get('status', '')
+  status_map = {
+    'active': models.ClientSubsc.SUBSC_ACTIVE,
+    'trialing': models.ClientSubsc.SUBSC_ACTIVE,
+    'canceled': models.ClientSubsc.SUBSC_CANCEL,
+    'past_due': models.ClientSubsc.SUBSC_PASTDUE,
+  }
+  mapped = status_map.get(status)
+  if mapped:
+    models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).update(status=mapped)
+
+
+# 毎月課金確認後のクーポン使用回数リセット処理
+def _coupon_reset(obj):
+  sp_sub_id = obj.get('subscription', '')
+  c_subsc_obj = models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).select_related('subsc').first()
+  if not c_subsc_obj:
+    return
+  models.CouponDist.objects.filter(client_subsc=c_subsc_obj).update(
+    coupon_cnt=c_subsc_obj.subsc.base_cnt,
+  )
+
+
+# クーポン配分の更新
+@api_view(['PUT'])
+def coupon_dist(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  theme = body.get('theme')
+  cnt = body.get('cnt')
+  if not theme or cnt is None:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. クライアントサブスク取得
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  c_client_subsc = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_client_subsc:
+    return Response({'error': 'bad request'}, status=400)
+
+  theme_obj = models.Theme.objects.filter(client=client_obj, name=theme).first()
+  if not theme_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 3. クーポン配分を更新
+  models.CouponDist.objects.update_or_create(
+    client_subsc=c_client_subsc,
+    theme=theme_obj,
+    defaults={'coupon_cnt': cnt},
+  )
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)

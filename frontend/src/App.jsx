@@ -13,6 +13,7 @@ import Coupon from './pages/Coupon'
 import Client from './pages/Client'
 import ClientAdd from './pages/ClientAdd'
 import ClientLogin from './pages/ClientLogin'
+import ClientSubsc from './pages/ClientSubsc'
 import ClientCoupon from './pages/ClientCoupon'
 import './reset.scss'
 import './app.scss'
@@ -52,11 +53,16 @@ export default function App() {
           <Route path='/client/add' element={<ClientAdd />} />
           {/* クライアント ログイン */}
           <Route path='/client/login' element={<ClientLogin />} />
+          {/* クライアント サブスク登録 */}
+          <Route path='/client/subsc' element={<ClientSubsc />} />
           {/* クライアント クーポン購入 */}
           <Route path='/client/coupon' element={<ClientCoupon />} />
 
         </Routes>
       </div>
+
+      {/* ヒントモーダル */}
+      <HintModal />
 
       <Footer />
     </>
@@ -223,5 +229,37 @@ function HomeDialog({onOk, onCancel}) {
         <button className='btn_cancel' onClick={onCancel}>キャンセル</button>
       </div>
     </div>
+  )
+}
+
+
+// ヒントモーダル
+function HintModal() {
+  const location = useLocation()
+  const [isOpen, setIsOpen] = useState(false)
+  const HINTS = {
+    '/': '質問を答えるとAIが物語を生成します\n回答が難しい質問は未回答でも大丈夫です',
+    '/face': '主人公の顔パーツを選択してください\n作成した顔で絵本が生成されます',
+    '/image': '各ページの文にマッチするイラストを選択してください',
+    '/preview': '購入すると sample 文字が消えます\nSNSシェアをしてくれると とても嬉しいです☺️',
+    '/purchase': '製本タイプを選択してください',
+    '/coupon': 'クーポンコードを入力してください',
+  }
+  const text = HINTS[location.pathname]
+  if (!text) return null
+
+  return (
+    <>
+      <button className='btn_hint' onClick={() => setIsOpen(true)}>？</button>
+      {isOpen &&
+        <div className='modal_bk' onClick={() => setIsOpen(false)} role='dialog' aria-modal='true' aria-label='ヒント'>
+          <div className='modal modal_hint' onClick={(e) => e.stopPropagation()}>
+            <button className='modal_close' onClick={() => setIsOpen(false)} aria-label='閉じる'>✖︎</button>
+            <h2>ヒント</h2>
+            <p>{text}</p>
+          </div>
+        </div>
+      }
+    </>
   )
 }

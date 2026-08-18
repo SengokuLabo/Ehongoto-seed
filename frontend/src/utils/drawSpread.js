@@ -165,7 +165,7 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview) {
     }
 
     // 顔パーツ描写
-    if (mask?.face) {
+    if (mask?.face && face) {
       const cx = isCover && cov ? ((mask.face.cx - cov.x) / cov.w) * destW + destX : mask.face.cx * W
       const cy = isCover && cov ? ((mask.face.cy - cov.y) / cov.h) * destH + destY : mask.face.cy * H
       const scale = isCover ? W / 720 * 2 : W / 720

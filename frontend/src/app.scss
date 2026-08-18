@@ -207,6 +207,49 @@ button {
   @include btn_ehon(#D4A878, 3rem);
 }
 
+.btn_hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  right: 5rem;
+  bottom: 5rem;
+  width: 5rem;
+  height: 5rem;
+  background: #B4A8C8;
+  border-radius: 50%;
+  color: white;
+  font-size: 3rem;
+  font-weight: 900;
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .5);
+
+  @media (max-width: 768px) {
+    right: 3rem;
+    bottom: 3rem;
+  }
+}
+
+// テーブル
+table {
+  width: 80%;
+  margin: 1rem auto;
+  border-collapse: collapse;
+  text-align: center;
+
+  thead td {
+    font-weight: bold;
+    background: #fafafa;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #fafafa;
+  }
+
+  td {
+    line-height: 2.5;
+    border: 1px solid #ccc;
+  }
+}
 
 // ドット
 .book_dots {
@@ -280,6 +323,13 @@ button {
 
   &:hover {
     color: #704020;
+  }
+}
+
+.modal_hint {
+  p {
+    white-space: pre-line;
+    line-height: 2;
   }
 }
 
@@ -888,35 +938,24 @@ button {
 
 
 // -------------- Client --------------
+.client {
+  td {
+    width: 33%;
+  }
+}
+
+.subsc_info {
+  margin-bottom: 5rem;
+}
+
 .theme_head {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.coupons {
-  width: 80%;
-  margin: 1rem auto;
-  border-collapse: collapse;
-  text-align: center;
-
-  thead td {
-    font-weight: bold;
-    background: #fafafa;
-  }
-
-  tbody tr:nth-child(even) {
-    background: #fafafa;
-  }
-
-  td {
-    line-height: 2.5;
-    border: 1px solid #ccc;
-  }
-
-  .coupon_ng {
-    color: #999;
-  }
+.coupon_ng {
+  color: #999;
 }
 
 
@@ -951,4 +990,31 @@ button {
   h4 {
     width: 15rem;
   }
+}
+
+
+// -------------- ClientSubsc --------------
+.client_subsc {
+  td {
+    width: auto;
+  }
+}
+
+// 解約確認モーダル
+.modal_cancel {
+  margin-bottom: 3%;
+  text-align: left;
+  line-height: 2;
+
+  li {
+    margin-left: 8rem;
+    list-style: decimal;
+  }
+}
+
+.cancel_err {
+  margin-bottom: 3rem;
+  text-align: center;
+  white-space: pre-line;
+  color: orange;
 }

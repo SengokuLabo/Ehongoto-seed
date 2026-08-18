@@ -63,6 +63,7 @@ class Client(models.Model):
   chk_token = models.UUIDField(default=uuid.uuid4, unique=True)
   chk_exp = models.DateTimeField(blank=True, null=True)
   logo = models.CharField(max_length=255, blank=True, default='')
+  is_free = models.BooleanField(default=False)
   is_active = models.BooleanField(default=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):
@@ -86,8 +87,26 @@ class FacePart(models.Model):
   part = models.CharField(max_length=10, choices=PART, default=PART_HAIR)
   img_path = models.CharField(max_length=255, blank=True)
   eye_turn = models.BooleanField(default=True)
+  def __str__(self):
+      return f'{self.part} {self.img_path}'
   class Meta:
     verbose_name_plural = '20 face parts'
+
+# 顔パーツグループ名
+class FaceGroupName(models.Model):
+  name = models.CharField(max_length=20)
+  def __str__(self):
+      return self.name
+  class Meta:
+    verbose_name_plural = '21 face group name'
+
+# 顔パーツグループ紐付け
+class FaceGroup(models.Model):
+  group = models.ForeignKey(FaceGroupName, on_delete=models.CASCADE)
+  part = models.ForeignKey(FacePart, on_delete=models.PROTECT)
+  class Meta:
+    verbose_name_plural = '22 face group'
+    unique_together = ('group', 'part')
 
 # 色マスタ
 class Colors(models.Model):
@@ -101,7 +120,7 @@ class Colors(models.Model):
   label = models.CharField(max_length=20)
   color = models.CharField(max_length=10)
   class Meta:
-    verbose_name_plural = '21 colors'
+    verbose_name_plural = '23 colors'
 
 # テーママスタ
 class Theme(models.Model):
@@ -109,14 +128,15 @@ class Theme(models.Model):
   name = models.CharField(max_length=50)
   year = models.SmallIntegerField(blank=True, null=True)
   prompt = models.TextField(default=SYSTEM_PROMPT)
-  price_pdf = models.IntegerField(default=300)
-  price_soft = models.IntegerField(default=3000)
+  price_pdf = models.IntegerField(default=500)
+  price_soft = models.IntegerField(default=3500)
   price_hard = models.IntegerField(default=8000)
+  face_group = models.ForeignKey(FaceGroupName, on_delete=models.PROTECT, blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):
     return f'{self.name} ({self.year})' if self.year else self.name
   class Meta:
-    verbose_name_plural = '03 themes'
+    verbose_name_plural = '10 themes'
 
 # 質問マスタ
 class Question(models.Model):
@@ -125,7 +145,7 @@ class Question(models.Model):
   chapter = models.CharField(max_length=50, blank=True, null=True)
   text = models.CharField(max_length=255)
   class Meta:
-    verbose_name_plural = '04 questions'
+    verbose_name_plural = '11 questions'
 
 # スタイルマスタ
 class Style(models.Model):
@@ -134,18 +154,29 @@ class Style(models.Model):
   label = models.CharField(max_length=50)
   options = models.JSONField()
   class Meta:
-    verbose_name_plural = '05 style'
+    verbose_name_plural = '12 style'
 
 # イラストマスタ
 class Image(models.Model):
-  theme = models.ForeignKey(Theme, on_delete=models.PROTECT)
   img_path = models.CharField(max_length=255)
   angle = models.SmallIntegerField(default=0)
   size = models.SmallIntegerField(default=0)
   ox = models.SmallIntegerField(default=0)
   tilt = models.SmallIntegerField(default=0)
+  orig_name = models.CharField(max_length=255, blank=True, null=True)
+  client = models.ForeignKey(Client, on_delete=models.PROTECT, blank=True, null=True)
+  def __str__(self):
+    return f'{self.client} {self.img_path}'
   class Meta:
-    verbose_name_plural = '22 images'
+    verbose_name_plural = '13 images'
+
+# テーマイラスト
+class ThemeImg(models.Model):
+  theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
+  img = models.ForeignKey(Image, on_delete=models.PROTECT)
+  class Meta:
+    verbose_name_plural = '14 theme img'
+    unique_together = ('theme', 'img')
 
 # 絵本情報
 class Book(models.Model):
@@ -177,19 +208,19 @@ class Book(models.Model):
   sp_pay_id = models.CharField(max_length=255, blank=True, default='')
   pdf_key = models.CharField(max_length=255, blank=True, default='')
   pdf_exp = models.DateTimeField()
-  hair = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+')
-  eye = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+')
-  nose = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+')
-  mouth = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+')
-  hair_color = models.ForeignKey(Colors, on_delete=models.PROTECT, related_name='+')
-  skin_color = models.ForeignKey(Colors, on_delete=models.PROTECT, related_name='+')
+  hair = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
+  eye = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
+  nose = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
+  mouth = models.ForeignKey(FacePart, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
+  hair_color = models.ForeignKey(Colors, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
+  skin_color = models.ForeignKey(Colors, on_delete=models.PROTECT, related_name='+', blank=True, null=True)
 
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
   def __str__(self):
     return f'{self.title} ({self.buyer.name})'
   class Meta:
-    verbose_name_plural = '10 books'
+    verbose_name_plural = '30 books'
 
 # 絵本ページ詳細
 class BookPage(models.Model):
@@ -201,7 +232,71 @@ class BookPage(models.Model):
   def __str__(self):
     return f'{self.book.title} {self.spread} {self.text1}'
   class Meta:
-    verbose_name_plural = '11 book pages'
+    verbose_name_plural = '31 book pages'
+
+# クーポン
+class Coupon(models.Model):
+  theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
+  code = models.CharField(max_length=10, unique=True)
+  max_uses = models.IntegerField(default=1)
+  rest_cnt = models.IntegerField(default=1)
+  valid_until = models.DateTimeField(blank=True, null=True)
+  sp_pay_id = models.CharField(max_length=255, blank=True, default='')
+  created_at = models.DateTimeField(auto_now_add=True)
+  class Meta:
+    verbose_name_plural = '40 coupons'
+
+# クーポン排他
+class LkCoupon(models.Model):
+  coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+  lk_token = models.UUIDField(default=uuid.uuid4, unique=True)
+  session = models.CharField(max_length=40)
+  name = models.CharField(max_length=100)
+  email = models.EmailField()
+  exp_at = models.DateTimeField()
+  class Meta:
+    verbose_name_plural = '41 coupons lock'
+
+# サブスクマスタ
+class Subsc(models.Model):
+  name = models.CharField(max_length=20)
+  sp_price_id = models.CharField(max_length=100)
+  price = models.SmallIntegerField(default=3000)
+  base_cnt = models.SmallIntegerField(default=3)
+  add_cnt = models.SmallIntegerField(default=3)
+  add_price = models.SmallIntegerField(default=500)
+  def __str__(self):
+    return self.name
+  class Meta:
+    verbose_name_plural = '50 subsc'
+
+# クライアント契約情報
+class ClientSubsc(models.Model):
+  SUBSC_ACTIVE = 'active'
+  SUBSC_CANCEL = 'canceled'
+  SUBSC_PASTDUE = 'past_due'
+  SUBSC_TYPE = [
+    (SUBSC_ACTIVE, 'アクティブ'),
+    (SUBSC_CANCEL, 'キャンセル'),
+    (SUBSC_PASTDUE, '有効期限切れ'),
+  ]
+  client = models.ForeignKey(Client, on_delete=models.PROTECT)
+  subsc = models.ForeignKey(Subsc, on_delete=models.PROTECT)
+  sp_sub_id = models.CharField(max_length=100)
+  status = models.CharField(max_length=15, choices=SUBSC_TYPE, default=SUBSC_ACTIVE)
+  start_at = models.DateTimeField(auto_now_add=True)
+  end_at = models.DateTimeField(blank=True, null=True)
+  class Meta:
+    verbose_name_plural = '51 client subsc'
+
+# クーポン配分
+class CouponDist(models.Model):
+  client_subsc = models.ForeignKey(ClientSubsc, on_delete=models.CASCADE)
+  theme = models.ForeignKey(Theme, on_delete=models.PROTECT)
+  coupon_cnt = models.SmallIntegerField(default=3)
+  class Meta:
+    verbose_name_plural = '52 coupon dist'
+    unique_together = ('client_subsc', 'theme')
 
 # 回答ログ
 class AnswerLog(models.Model):
@@ -218,26 +313,3 @@ class PendingBook(models.Model):
   created_at = models.DateTimeField(auto_now_add=True)
   class Meta:
     verbose_name_plural = '99 pending books'
-
-# クーポン
-class Coupon(models.Model):
-  theme = models.ForeignKey(Theme, on_delete=models.CASCADE)
-  code = models.CharField(max_length=10, unique=True)
-  max_uses = models.IntegerField(default=1)
-  rest_cnt = models.IntegerField(default=1)
-  valid_until = models.DateTimeField(blank=True, null=True)
-  sp_pay_id = models.CharField(max_length=255, blank=True, default='')
-  created_at = models.DateTimeField(auto_now_add=True)
-  class Meta:
-    verbose_name_plural = '30 coupons'
-
-# クーポン排他
-class LkCoupon(models.Model):
-  coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
-  lk_token = models.UUIDField(default=uuid.uuid4, unique=True)
-  session = models.CharField(max_length=40)
-  name = models.CharField(max_length=100)
-  email = models.EmailField()
-  exp_at = models.DateTimeField()
-  class Meta:
-    verbose_name_plural = '31 lock coupons'

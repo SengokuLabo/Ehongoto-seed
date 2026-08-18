@@ -102,7 +102,14 @@ export default function QuestionForm() {
   const handleGenerate = async () => {
     // すでにgenerate処理後で入力更新されていない場合
     if (!hasChanged && location.state?.result) {
-      navigate('/face', { state: { ...location.state, answers, styleSelections, lkToken } })
+      const result = location.state.result
+      if (result.face_parts && Object.keys(result.face_parts).length > 0) {
+        // 顔パーツありテーマ
+        navigate('/face', { state: { ...location.state, answers, styleSelections, lkToken } })
+      } else {
+        // 顔パーツなしテーマ
+        navigate('/image', {state: { ...location.state, answers, styleSelections, lkToken } })
+      }
       return
     }
 
@@ -115,8 +122,13 @@ export default function QuestionForm() {
         answers,
         styles: styleSelections,
       })
-      // FaceSelectへ遷移
-      navigate('/face', {state: {search: location.search, result, answers, styleSelections, lkToken}})
+      if (result.face_parts && Object.keys(result.face_parts).length > 0) {
+        // 顔パーツありテーマ → FaceSelectへ遷移
+        navigate('/face', {state: {search: location.search, result, answers, styleSelections, lkToken}})
+      } else {
+        // 顔パーツなしテーマ → ImageSelectへ遷移
+        navigate('/image', {state: {search: location.search, result, answers, styleSelections, lkToken}})
+      }
     } catch (err) {
       setGenError('生成に失敗しました。もう一度お試しください')
     } finally {

@@ -14,6 +14,7 @@ export default function ImageSelect() {
   const imgs = result?.images ?? mock.images
   const faceParts = result?.face_parts ?? mock.face_parts
   const lkToken = location.state?.lkToken ?? ''
+  const isFace = result.face_parts
 
   const [spreads, setSpreads] = useState(() => {
     const raw = result?.spreads ?? mock.spreads
@@ -78,9 +79,15 @@ export default function ImageSelect() {
     }
   }
 
-  // FaceSelectへ戻る
+  // FaceSelect or Questionへ戻る
   const handlePre = () => {
-    navigate('/face', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
+    if (isFace) {
+      // 顔パーツありテーマ
+      navigate('/face', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
+    } else {
+      // 顔パーツなしテーマ
+      navigate('/image', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
+    }
   }
 
   return (
@@ -118,7 +125,7 @@ export default function ImageSelect() {
       </div>
 
       <div className='btns btns_trans'>
-        <button className='btn_back' onClick={handlePre}>顔選択へ戻る</button>
+        <button className='btn_back' onClick={handlePre}>{isFace ? '顔選択' : '質問'}へ戻る</button>
         <button className='btn_driv' onClick={handleNext} disabled={!isAllOk}>確認へ進む</button>
       </div>
     </div>

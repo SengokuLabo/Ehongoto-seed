@@ -20,4 +20,10 @@ urlpatterns = [
   path('client/login', views_client.login, name='クライアント ログイン'),
   path('client/themes', views_client.themes, name='クライアント テーマ一覧'),
   path('client/coupon/purchase', views_client.coupon_payment, name='クライアント クーポン購入'),
+  path('client/coupon_dist', views_client.coupon_dist, name='クライアント クーポン配布設定'),
+
+  # サブスク関係
+  path('client/subsc/plans', views_client.subsc_plan, name='サブスク一覧取得'),
+  path('client/subsc/signup', views_client.subsc_signup, name='サブスク登録'),
+  path('client/subsc/cancel', views_client.subsc_cancel, name='サブスク解約'),
 ]

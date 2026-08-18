@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Client, Theme, Question, Style, FacePart, Colors, Image, Buyer, Book, BookPage, AnswerLog, PendingBook, Coupon, LkCoupon
+from . import models
 
 # インライン【テーマ】
 class ThemeInline(admin.TabularInline):
-  model = Theme
+  model = models.Theme
   extra = 0
   fields = (
     'name',
@@ -21,7 +21,7 @@ class ThemeInline(admin.TabularInline):
 
 # インライン【質問】
 class QuestionInline(admin.TabularInline):
-  model = Question
+  model = models.Question
   extra = 0
   fields = (
     'sort',
@@ -32,7 +32,7 @@ class QuestionInline(admin.TabularInline):
 
 # インライン【スタイル】
 class StyleInline(admin.TabularInline):
-  model = Style
+  model = models.Style
   extra = 0
   fields = (
     'key',
@@ -43,7 +43,7 @@ class StyleInline(admin.TabularInline):
 
 # インライン【絵本ページ】
 class BookPageInline(admin.TabularInline):
-  model = BookPage
+  model = models.BookPage
   extra = 0
   fields = ('spread', 'text1', 'text2', 'img')
   readonly_fields = ('spread', 'text1', 'text2', 'img')
@@ -51,19 +51,41 @@ class BookPageInline(admin.TabularInline):
 
 # インライン【クーポン排他】
 class LkCouponInline(admin.TabularInline):
-  model = LkCoupon
+  model = models.LkCoupon
   extra = 0
   fields = ('name', 'email', 'exp_at', )
   readonly_fields = ('name', 'email', 'exp_at', )
   show_change_link = True
 
+# インライン【顔パーツグループ】
+class FaceGroupInline(admin.TabularInline):
+  model = models.FaceGroup
+  extra = 0
+  fields = ('part', )
+  show_change_link = True
+
+# インライン【テーマイラスト】
+class ThemeImgInline(admin.TabularInline):
+  model = models.ThemeImg
+  extra = 0
+  fields = ('img', )
+  show_change_link = True
+
+# インライン【クライアントサブスク】
+class CouponDistInline(admin.TabularInline):
+  model = models.CouponDist
+  extra = 0
+  fields = ('theme', 'coupon_cnt',)
+  show_change_link = True
+
 # クライアント
-@admin.register(Client)
+@admin.register(models.Client)
 class ClientAdmin(admin.ModelAdmin):
   list_display = (
     'id',
     'name',
     'email',
+    'is_free',
     'is_active',
   )
   list_filter = (
@@ -79,7 +101,7 @@ class ClientAdmin(admin.ModelAdmin):
   inlines = [ThemeInline]
 
 # テーマ
-@admin.register(Theme)
+@admin.register(models.Theme)
 class ThemeAdmin(admin.ModelAdmin):
   list_display = (
     'client_name',
@@ -88,6 +110,7 @@ class ThemeAdmin(admin.ModelAdmin):
     'price_soft',
     'price_hard',
     'q_count',
+    'face_group',
   )
   list_filter = (
     'client',
@@ -100,10 +123,10 @@ class ThemeAdmin(admin.ModelAdmin):
   client_name.short_description = 'クライアント'
   def q_count(self, obj):
     return obj.question_set.count()
-  inlines = [QuestionInline, StyleInline]
+  inlines = [QuestionInline, StyleInline, ThemeImgInline]
 
 # 質問
-@admin.register(Question)
+@admin.register(models.Question)
 class QuestionAdmin(admin.ModelAdmin):
   list_display = (
     'client_name',
@@ -126,7 +149,7 @@ class QuestionAdmin(admin.ModelAdmin):
   theme_name.short_description = 'テーマ'
 
 # スタイル
-@admin.register(Style)
+@admin.register(models.Style)
 class StyleAdmin(admin.ModelAdmin):
   list_display = (
     'theme_name',
@@ -144,7 +167,7 @@ class StyleAdmin(admin.ModelAdmin):
   theme_name.short_description = 'テーマ'
 
 # 顔パーツ
-@admin.register(FacePart)
+@admin.register(models.FacePart)
 class FacePartAdmin(admin.ModelAdmin):
   list_display = (
     'part',
@@ -158,7 +181,7 @@ class FacePartAdmin(admin.ModelAdmin):
   list_per_page = 30
 
 # 色マスタ
-@admin.register(Colors)
+@admin.register(models.Colors)
 class ColorsAdmin(admin.ModelAdmin):
   list_display = [
     'part',
@@ -172,27 +195,26 @@ class ColorsAdmin(admin.ModelAdmin):
   list_per_page = 30
 
 # イラスト
-@admin.register(Image)
+@admin.register(models.Image)
 class ImageAdmin(admin.ModelAdmin):
   list_display = (
-    'theme_name',
+    'client_name',
     'img_path',
+    'orig_name',
     'angle',
     'size',
     'ox',
     'tilt',
   )
-  list_filter = (
-    'theme',
-  )
+  list_filter = ('client', )
   list_per_page = 30
-  ordering = ('theme', 'img_path')
-  def theme_name(self, obj):
-    return obj.theme.name if obj.theme else ''
-  theme_name.short_description = 'テーマ'
+  ordering = ('client', 'img_path')
+  def client_name(self, obj):
+    return obj.client.name if obj.client else ''
+  client_name.short_description = '登録クライアント'
 
 # 購入者
-@admin.register(Buyer)
+@admin.register(models.Buyer)
 class BuyerAdmin(admin.ModelAdmin):
   list_display = (
     'id',
@@ -208,7 +230,7 @@ class BuyerAdmin(admin.ModelAdmin):
   list_per_page = 30
 
 # 絵本
-@admin.register(Book)
+@admin.register(models.Book)
 class BookAdmin(admin.ModelAdmin):
   list_display = (
     'theme_name',
@@ -236,7 +258,7 @@ class BookAdmin(admin.ModelAdmin):
   inlines = [BookPageInline]
 
 # 絵本ページ
-@admin.register(BookPage)
+@admin.register(models.BookPage)
 class BookPageAdmin(admin.ModelAdmin):
   list_display = (
     'book_name',
@@ -253,7 +275,7 @@ class BookPageAdmin(admin.ModelAdmin):
   book_name.short_description = '絵本'
 
 # 回答ログ
-@admin.register(AnswerLog)
+@admin.register(models.AnswerLog)
 class AnswerLogAdmin(admin.ModelAdmin):
   list_display = (
     'created_at',
@@ -264,7 +286,7 @@ class AnswerLogAdmin(admin.ModelAdmin):
   list_per_page = 30
 
 # 仮登録
-@admin.register(PendingBook)
+@admin.register(models.PendingBook)
 class PendingBookAdmin(admin.ModelAdmin):
   list_display = (
     'data',
@@ -274,7 +296,7 @@ class PendingBookAdmin(admin.ModelAdmin):
   list_per_page = 30
 
 # クーポン
-@admin.register(Coupon)
+@admin.register(models.Coupon)
 class CouponAdmin(admin.ModelAdmin):
   list_display = (
     'client_name',
@@ -287,9 +309,48 @@ class CouponAdmin(admin.ModelAdmin):
   )
   list_filter = ('theme__client', 'theme')
   ordering = ('created_at', 'theme',)
+  list_per_page = 30
   def client_name(self, obj):
     return obj.theme.client.name if obj.theme.client else ''
   client_name.short_description = 'クライアント'
   def theme_name(self, obj):
     return obj.theme.name if obj.theme else ''
   theme_name.short_description = 'テーマ'
+  inlines = [LkCouponInline]
+
+# 顔パーツグループ名
+@admin.register(models.FaceGroupName)
+class FaceGroupNameAdmin(admin.ModelAdmin):
+  list_display = ('name', )
+  list_per_page = 30
+  inlines = [FaceGroupInline]
+
+# サブスクマスタ
+@admin.register(models.Subsc)
+class SubscAdmin(admin.ModelAdmin):
+  list_display = (
+    'name',
+    'price',
+    'base_cnt',
+    'add_cnt',
+    'add_price',
+  )
+  ordering = ('price', )
+  list_per_page = 30
+
+# クライアント登録情報
+@admin.register(models.ClientSubsc)
+class ClientSubscAdmin(admin.ModelAdmin):
+  list_display = (
+    'client_name',
+    'subsc',
+    'status',
+    'start_at',
+    'end_at',
+  )
+  list_filter = ('status',)
+  ordering = ('status', 'start_at', )
+  def client_name(self, obj):
+    return obj.client.name if obj.client else ''
+  client_name.short_description = 'クライアント'
+  inlines = [CouponDistInline]

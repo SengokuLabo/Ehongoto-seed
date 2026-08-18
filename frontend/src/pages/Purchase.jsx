@@ -59,7 +59,7 @@ export default function Purchase() {
       // 決済完了画面へ遷移
       window.location.href = ckResult.ck_url
     } catch (err) {
-      setError('決済に失敗しました。もう一度お試しください')
+      setError('決済に失敗しました もう一度お試しください')
     } finally {
       setPaying(false)
     }
@@ -163,9 +163,7 @@ export default function Purchase() {
       </label>
 
       {/* エラー表示 */}
-      {error &&
-        <p className='error'>{error}
-        </p>}
+      {error && <p className='error'>{error}</p>}
 
       {/* 購入確認モーダル */}
       {isModal && (

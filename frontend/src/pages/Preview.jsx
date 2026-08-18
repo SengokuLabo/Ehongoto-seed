@@ -279,7 +279,7 @@ function ShareModal({ spread, face, faceParts, onClose }) {
       aria-label='SNSシェア'
     >
       <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる'>×</button>
+        <button className='modal_close' onClick={onClose} aria-label='閉じる'>✖︎</button>
         <h2>シェアする</h2>
         <div className='book_outer'>
           <BookCanvas

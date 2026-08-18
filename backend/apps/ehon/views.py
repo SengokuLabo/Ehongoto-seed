@@ -1,16 +1,15 @@
 import json, os, stripe
 from django.utils import timezone
+from django.conf import settings
 from datetime import timedelta
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from urllib.parse import urlencode
 from apps.common.auth import send_mail
 from apps.common.mail_temp import pdf_purchase, print_purchase, print_admin, contact_admin, contact_reply
-from .models import Client, Question, Style, Book, BookPage, Buyer, FacePart, Colors, Image, Theme, PendingBook, AnswerLog
+from . import models
 from .ai import generate_story
-from .views_client import _coupon_purchase
-
-# 詳細は docs/api-design.md 参照
+from .views_client import _coupon_purchase, _subsc_signup, _subsc_update, _subsc_deleted, _coupon_reset
 
 # 定数
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -28,23 +27,29 @@ def get_question(request):
   # バリデーションチェック
   if not client:
     return Response({'error': 'bad request'}, status=400)
-  client_obj = Client.objects.filter(name=client).first()
+  client_obj = models.Client.objects.filter(name=client).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=400)
 
+  # サブスクフリーアカウント or サブスク有効かを判定
+  if not client_obj.is_free:
+    subsc = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+    if not subsc:
+      return Response({'error': 'bad request'}, status=400)
+
   if not theme:
     return Response({'error': 'bad request'}, status=400)
-  theme_obj = Theme.objects.filter(client=client_obj, name=theme, year=year).first()
+  theme_obj = models.Theme.objects.filter(client=client_obj, name=theme, year=year).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
 
   # 質問内容取得
-  question_obj = Question.objects.filter(theme=theme_obj).order_by('sort')
+  question_obj = models.Question.objects.filter(theme=theme_obj).order_by('sort')
   if not question_obj:
     return Response({'questions': []}, status=200)
 
   # スタイル取得
-  style_obj = Style.objects.filter(theme=theme_obj)
+  style_obj = models.Style.objects.filter(theme=theme_obj)
 
   # 質問一覧を返却
   return Response({
@@ -62,7 +67,7 @@ def generate(request):
     return Response({'error': 'bad request'}, status=400)
 
   # テーマ取得
-  theme_obj = Theme.objects.filter(name = body.get('theme')).first()
+  theme_obj = models.Theme.objects.filter(name = body.get('theme')).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
   answers = body.get('answers')
@@ -73,7 +78,7 @@ def generate(request):
   styles = body.get('styles', {})
 
   # ログ登録
-  log_obj = AnswerLog.objects.create(
+  log_obj = models.AnswerLog.objects.create(
     data = body
   )
 
@@ -84,19 +89,27 @@ def generate(request):
     return Response({'error': 'server error'}, status=500)
 
   # 3. 顔パーツ・イラスト一覧を返却
-  hair = FacePart.objects.filter(part=FacePart.PART_HAIR).order_by('img_path')
-  eye = FacePart.objects.filter(part=FacePart.PART_EYE).order_by('img_path')
-  nose = FacePart.objects.filter(part=FacePart.PART_NOSE).order_by('img_path')
-  mouth = FacePart.objects.filter(part=FacePart.PART_MOUTH).order_by('img_path')
-  face_parts = {
-    'hair': list(hair.values('id', 'img_path')),
-    'eye': list(eye.values('id', 'img_path', 'eye_turn')),
-    'nose': list(nose.values('id', 'img_path')),
-    'mouth': list(mouth.values('id', 'img_path')),
-  }
-  images = Image.objects.filter(theme=theme_obj).order_by('id')
-  hair_colors = Colors.objects.filter(part=Colors.COLOR_HAIR).order_by('color')
-  skin_colors = Colors.objects.filter(part=Colors.COLOR_SKIN).order_by('-color')
+  if theme_obj.face_group:
+    # 顔パーツありテーマ
+    hair = models.FacePart.objects.filter(part=models.FacePart.PART_HAIR, facegroup__group=theme_obj.face_group).order_by('img_path')
+    eye = models.FacePart.objects.filter(part=models.FacePart.PART_EYE, facegroup__group=theme_obj.face_group).order_by('img_path')
+    nose = models.FacePart.objects.filter(part=models.FacePart.PART_NOSE, facegroup__group=theme_obj.face_group).order_by('img_path')
+    mouth = models.FacePart.objects.filter(part=models.FacePart.PART_MOUTH, facegroup__group=theme_obj.face_group).order_by('img_path')
+    face_parts = {
+      'hair': [{'id': fp.id, 'img_path': f"{settings.MEDIA_URL}faces/{fp.img_path}"} for fp in hair],
+      'eye': [{'id': fp.id, 'img_path': f"{settings.MEDIA_URL}faces/{fp.img_path}", 'eye_turn': fp.eye_turn} for fp in eye],
+      'nose': [{'id': fp.id, 'img_path': f"{settings.MEDIA_URL}faces/{fp.img_path}"} for fp in nose],
+      'mouth': [{'id': fp.id, 'img_path': f"{settings.MEDIA_URL}faces/{fp.img_path}"} for fp in mouth],
+    }
+    hair_colors = models.Colors.objects.filter(part=models.Colors.COLOR_HAIR).order_by('color')
+    skin_colors = models.Colors.objects.filter(part=models.Colors.COLOR_SKIN).order_by('-color')
+  else:
+    # 顔パーツなしテーマ
+    face_parts = {}
+    hair_colors = []
+    skin_colors = []
+
+  images = models.Image.objects.filter(themeimg__theme=theme_obj).order_by('id')
   price = {
     'pdf': theme_obj.price_pdf,
     'soft': theme_obj.price_soft,
@@ -108,9 +121,16 @@ def generate(request):
     'title': result[0]['text1'],
     'spreads': result,
     'face_parts': face_parts,
-    'hair_colors': list(hair_colors.values('label', 'color')),
-    'skin_colors': list(skin_colors.values('label', 'color')),
-    'images': list(images.values('id', 'img_path', 'angle', 'size', 'ox', 'tilt')),
+    'hair_colors': list(hair_colors.values('label', 'color')) if hair_colors else None,
+    'skin_colors': list(skin_colors.values('label', 'color')) if skin_colors else None,
+    'images': [{
+      'id': i.id,
+      'img_path': f"{settings.MEDIA_URL}images/{i.img_path}",
+      'angle': i.angle,
+      'size': i.size,
+      'ox': i.ox,
+      'tilt': i.tilt,
+      } for i in images],
     'log_id': log_obj.id,
     'price': price,
   }, status=200)
@@ -127,10 +147,10 @@ def payment(request):
   type = body.get('type')
   if not type:
     return Response({'error': 'bad request'}, status=400)
-  types = [t[0] for t in Book.BOOK_TYPE]
+  types = [t[0] for t in models.Book.BOOK_TYPE]
   if type not in types:
     return Response({'error': 'bad request'}, status=400)
-  theme_obj = Theme.objects.filter(name=body.get('theme')).first()
+  theme_obj = models.Theme.objects.filter(name=body.get('theme')).first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
   buyer = body.get('buyer')
@@ -146,15 +166,15 @@ def payment(request):
   title = spreads[0].get('text1', '')
 
   # 2. 金額設定
-  if type == Book.TYPE_PDF:
+  if type == models.Book.TYPE_PDF:
     price = theme_obj.price_pdf
-  elif type == Book.TYPE_SOFT:
+  elif type == models.Book.TYPE_SOFT:
     price = theme_obj.price_soft
   else:
     price = theme_obj.price_hard
 
   # 3. pendingデータ登録
-  pending_obj = PendingBook.objects.create(data={
+  pending_obj = models.PendingBook.objects.create(data={
     'type': type,
     'theme_id': theme_obj.id,
     'title': title,
@@ -201,16 +221,29 @@ def callback(request):
   except stripe.error.SignatureVerificationError:
     return Response({'error': 'forbidden'}, status=403)
 
-  if event.get('type') != 'checkout.session.completed':
-    return Response({'status': 'ignored'}, status=200)
-
   # 2. タイプ別後続処理に分岐
   session_obj = event.get('data', {}).get('object', {})
-  type = session_obj.get('metadata', {}).get('type')
-  if type == 'book':
-    _book_purchase(session_obj)
-  elif type == 'coupon':
-    _coupon_purchase(session_obj)
+  event_type = event.get('type')
+  if event_type == 'checkout.session.completed':
+    meta_type = session_obj.get('metadata', {}).get('type')
+    if meta_type == 'book':
+      # 絵本購入時
+      _book_purchase(session_obj)
+    elif meta_type == 'coupon':
+      # クーポン購入時（クライアント）
+      _coupon_purchase(session_obj)
+    elif meta_type == 'subsc':
+      # サブスク登録時（クライアント）
+      _subsc_signup(session_obj)
+  elif event_type == 'invoice.payment_succeeded':
+    # サブスクの毎月決済時（クライアント）
+    _coupon_reset(session_obj)
+  elif event_type == 'customer.subscription.updated':
+    # サブスクプラン変更（クライアント）
+    _subsc_update(session_obj)
+  elif event_type == 'customer.subscription.deleted':
+    # サブスク解約（クライアント）
+    _subsc_deleted(session_obj)
 
   # 3. Stripe に 200 返却
   return Response({'detail': 'callback ok!'}, status=200)
@@ -221,7 +254,7 @@ def _book_purchase(session_obj):
   # 2. pendingデータ取得
   sp_pay_id = session_obj.get('id', '')
   token = session_obj.get('metadata', {}).get('token', '')
-  pending_obj = PendingBook.objects.filter(token=token).first()
+  pending_obj = models.PendingBook.objects.filter(token=token).first()
   if not pending_obj:
     return
   data = pending_obj.data
@@ -229,7 +262,7 @@ def _book_purchase(session_obj):
   # 3. DB保存
   # 購入者登録
   buyer_data = data.get('buyer')
-  buyer_obj, _ = Buyer.objects.get_or_create(
+  buyer_obj, _ = models.Buyer.objects.get_or_create(
     email=buyer_data.get('email'),
     defaults={
       'name': buyer_data.get('name', ''),
@@ -242,21 +275,21 @@ def _book_purchase(session_obj):
 
   # 顔パーツ取得
   face = data.get('face')
-  hair = FacePart.objects.filter(id=face.get('hair')).first()
-  eye = FacePart.objects.filter(id=face.get('eye')).first()
-  nose = FacePart.objects.filter(id=face.get('nose')).first()
-  mouth = FacePart.objects.filter(id=face.get('mouth')).first()
-  hair_color = Colors.objects.filter(color=face.get('hairColor')).first()
-  skin_color = Colors.objects.filter(color=face.get('skinColor')).first()
+  hair = models.FacePart.objects.filter(id=face.get('hair')).first() if face else None
+  eye = models.FacePart.objects.filter(id=face.get('eye')).first() if face else None
+  nose = models.FacePart.objects.filter(id=face.get('nose')).first() if face else None
+  mouth = models.FacePart.objects.filter(id=face.get('mouth')).first() if face else None
+  hair_color = models.Colors.objects.filter(color=face.get('hairColor')).first() if face else None
+  skin_color = models.Colors.objects.filter(color=face.get('skinColor')).first() if face else None
 
   # book登録
-  book_obj = Book.objects.create(
+  book_obj = models.Book.objects.create(
     token=pending_obj.token,
     buyer=buyer_obj,
     theme_id=data.get('theme_id'),
     title=data.get('title'),
     book_type=data.get('type'),
-    status=Book.STATUS_PAID,
+    status=models.Book.STATUS_PAID,
     sp_pay_id=sp_pay_id,
     price=data.get('price'),
     pdf_exp=timezone.now() + timedelta(days=30),
@@ -270,18 +303,18 @@ def _book_purchase(session_obj):
 
   # ページ登録
   for spread in data.get('spreads'):
-    BookPage.objects.create(
+    models.BookPage.objects.create(
       book=book_obj,
       spread=spread.get('sp_num'),
       text1=spread.get('text1'),
       text2=spread.get('text2'),
-      img=Image.objects.filter(id=(spread.get('img') or {}).get('id')).first(),
+      img=models.Image.objects.filter(id=(spread.get('img') or {}).get('id')).first(),
     )
 
   # 回答ログにbookを紐付け
   log_id = data.get('log_id')
   if log_id:
-    AnswerLog.objects.filter(
+    models.AnswerLog.objects.filter(
       id = log_id
     ).update(
       book = book_obj
@@ -293,7 +326,7 @@ def _book_purchase(session_obj):
   # 4. SESメール送信
   home = urlencode({'client': book_obj.theme.client.name, 'theme': book_obj.theme.name})
   download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}?{home}"
-  if data.get('type') == Book.TYPE_PDF:
+  if data.get('type') == models.Book.TYPE_PDF:
     # PDF
     body_text, body_html = pdf_purchase(book_obj, download_url)
     send_mail(
@@ -330,7 +363,7 @@ def _book_purchase(session_obj):
 @api_view(['GET'])
 def ehon_data(request, token):
   # 購入済み絵本データ取得
-  book_obj = Book.objects.filter(token=token).first()
+  book_obj = models.Book.objects.filter(token=token).first()
   if not book_obj:
     return Response({'error': 'book not found'}, status=404)
 
@@ -338,32 +371,32 @@ def ehon_data(request, token):
   if timezone.now() > book_obj.pdf_exp:
     return Response({'error': 'pdf expired'}, status=403)
 
-  spread_obj = BookPage.objects.filter(book=book_obj).order_by('spread').select_related('img')
+  spread_obj = models.BookPage.objects.filter(book=book_obj).order_by('spread').select_related('img')
 
   return Response({
     'title': book_obj.title,
     'status': book_obj.status,
     'pdf_exp': book_obj.pdf_exp,
     'face': {
-      'hair': book_obj.hair.id,
-      'eye': book_obj.eye.id,
-      'nose': book_obj.nose.id,
-      'mouth': book_obj.mouth.id,
-      'hairColor': book_obj.hair_color.color,
-      'skinColor': book_obj.skin_color.color,
+      'hair': book_obj.hair.id if book_obj.hair else None,
+      'eye': book_obj.eye.id if book_obj.eye else None,
+      'nose': book_obj.nose.id if book_obj.nose else None,
+      'mouth': book_obj.mouth.id if book_obj.mouth else None,
+      'hairColor': book_obj.hair_color.color if book_obj.hair_color else None,
+      'skinColor': book_obj.skin_color.color if book_obj.skin_color else None,
     },
     'face_parts': {
-      'hair':  [{'id': book_obj.hair.id,  'img_path': book_obj.hair.img_path}],
-      'eye':   [{'id': book_obj.eye.id,   'img_path': book_obj.eye.img_path,   'eye_turn': book_obj.eye.eye_turn}],
-      'nose':  [{'id': book_obj.nose.id,  'img_path': book_obj.nose.img_path}],
-      'mouth': [{'id': book_obj.mouth.id, 'img_path': book_obj.mouth.img_path}],
+      'hair':  [{'id': book_obj.hair.id,  'img_path': f"{settings.MEDIA_URL}faces/{book_obj.hair.img_path}"}] if book_obj.hair else None,
+      'eye':   [{'id': book_obj.eye.id,   'img_path': f"{settings.MEDIA_URL}faces/{book_obj.eye.img_path}", 'eye_turn': book_obj.eye.eye_turn}] if book_obj.eye else None,
+      'nose':  [{'id': book_obj.nose.id,  'img_path': f"{settings.MEDIA_URL}faces/{book_obj.nose.img_path}"}] if book_obj.nose else None,
+      'mouth': [{'id': book_obj.mouth.id, 'img_path': f"{settings.MEDIA_URL}faces/{book_obj.mouth.img_path}"}] if book_obj.mouth else None,
     },
     'spreads': [{
       'sp_num': sp.spread,
       'text1': sp.text1,
       'text2': sp.text2,
       'img': {
-          'img_path': sp.img.img_path if sp.img else None,
+          'img_path': f"{settings.MEDIA_URL}images/{sp.img.img_path}" if sp.img else None,
           'angle'   : sp.img.angle    if sp.img else None,
           'size'    : sp.img.size     if sp.img else None,
           'ox'      : sp.img.ox       if sp.img else None,
@@ -443,17 +476,17 @@ def contact(request):
   return Response({'detail': 'mail ok'}, status=200)
 
 
-# テーマ一覧取得
+# テーマ一覧取得 ※ダッシュボード用
 @api_view(['GET'])
 def get_themes(request):
   # 1. バリデーション
   client = request.GET.get('client')
-  client_obj = Client.objects.filter(name=client).first()
+  client_obj = models.Client.objects.filter(name=client).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=400)
 
   # 2. テーマ一覧取得
-  theme_obj = Theme.objects.filter(client=client_obj).order_by('id')
+  theme_obj = models.Theme.objects.filter(client=client_obj).order_by('id')
   theme_list = [{
     'name': t.name,
     'year': t.year,
