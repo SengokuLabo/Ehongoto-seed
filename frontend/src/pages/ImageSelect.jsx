@@ -14,7 +14,7 @@ export default function ImageSelect() {
   const imgs = result?.images ?? mock.images
   const faceParts = result?.face_parts ?? mock.face_parts
   const lkToken = location.state?.lkToken ?? ''
-  const isFace = result.face_parts
+  const isFace = result.face_parts && Object.keys(result.face_parts).length > 0
 
   const [spreads, setSpreads] = useState(() => {
     const raw = result?.spreads ?? mock.spreads
@@ -86,7 +86,7 @@ export default function ImageSelect() {
       navigate('/face', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
     } else {
       // 顔パーツなしテーマ
-      navigate('/image', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
+      navigate('/question', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
     }
   }
 
