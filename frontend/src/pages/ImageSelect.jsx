@@ -86,7 +86,7 @@ export default function ImageSelect() {
       navigate('/face', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
     } else {
       // 顔パーツなしテーマ
-      navigate('/question', { state: { ...location.state, result: { ...result, spreads }, lkToken } })
+      navigate('/' + (location.state?.search ?? ''), { state: { ...location.state, result: { ...result, spreads }, lkToken } })
     }
   }
 
