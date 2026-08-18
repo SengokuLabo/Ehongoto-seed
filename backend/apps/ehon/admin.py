@@ -129,7 +129,6 @@ class ThemeAdmin(admin.ModelAdmin):
 @admin.register(models.Question)
 class QuestionAdmin(admin.ModelAdmin):
   list_display = (
-    'client_name',
     'theme_name',
     'sort',
     'chapter',
@@ -141,11 +140,8 @@ class QuestionAdmin(admin.ModelAdmin):
   )
   ordering = ('theme__client', 'theme', 'sort')
   list_per_page = 30
-  def client_name(self, obj):
-    return obj.theme.client.name if obj.theme.client else ''
-  client_name.short_description = 'クライアント'
   def theme_name(self, obj):
-    return obj.theme.name if obj.theme else ''
+    return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''
   theme_name.short_description = 'テーマ'
 
 # スタイル
@@ -163,7 +159,7 @@ class StyleAdmin(admin.ModelAdmin):
   ordering = ('theme', 'id')
   list_per_page = 30
   def theme_name(self, obj):
-    return obj.theme.name if obj.theme else ''
+    return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''
   theme_name.short_description = 'テーマ'
 
 # 顔パーツ
@@ -250,7 +246,7 @@ class BookAdmin(admin.ModelAdmin):
   ordering = ('created_at', )
   list_per_page = 30
   def theme_name(self, obj):
-    return obj.theme.name if obj.theme else ''
+    return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''
   theme_name.short_description='テーマ'
   def buyer_name(self, obj):
     return obj.buyer.name if obj.buyer else ''
@@ -299,7 +295,6 @@ class PendingBookAdmin(admin.ModelAdmin):
 @admin.register(models.Coupon)
 class CouponAdmin(admin.ModelAdmin):
   list_display = (
-    'client_name',
     'theme_name',
     'code',
     'max_uses',
@@ -310,11 +305,8 @@ class CouponAdmin(admin.ModelAdmin):
   list_filter = ('theme__client', 'theme')
   ordering = ('created_at', 'theme',)
   list_per_page = 30
-  def client_name(self, obj):
-    return obj.theme.client.name if obj.theme.client else ''
-  client_name.short_description = 'クライアント'
   def theme_name(self, obj):
-    return obj.theme.name if obj.theme else ''
+    return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''
   theme_name.short_description = 'テーマ'
   inlines = [LkCouponInline]
 

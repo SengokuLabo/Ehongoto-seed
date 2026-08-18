@@ -134,7 +134,8 @@ class Theme(models.Model):
   face_group = models.ForeignKey(FaceGroupName, on_delete=models.PROTECT, blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):
-    return f'{self.name} ({self.year})' if self.year else self.name
+    base = f'{self.client.name} {self.name}'
+    return f'{base} ({self.year})' if self.year else base
   class Meta:
     verbose_name_plural = '10 themes'
 
