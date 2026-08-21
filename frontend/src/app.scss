@@ -959,14 +959,32 @@ table {
   }
 }
 
+.client_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .subsc_info {
   margin-bottom: 5rem;
 }
 
-.theme_head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.coupon_dist {
+  margin-bottom: 5rem;
+  padding-bottom: 3rem;
+  border-bottom: solid 1px #333;
+
+  input {
+    width: 100%;
+    text-align: right;
+    line-height: 2.5;
+    background: none;
+    border: none;
+
+    &::-webkit-inner-spin-button {
+      margin-left: 3rem;
+    }
+  }
 }
 
 .theme_head_price {

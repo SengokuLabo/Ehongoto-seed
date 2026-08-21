@@ -439,7 +439,7 @@ class CouponDistTest(BaseSetup):
       sp_sub_id='sub_test123',
       status=ClientSubsc.SUBSC_ACTIVE,
     )
-    self.data = {'theme': self.theme.name, 'cnt': 2}
+    self.data = [{'theme': self.theme.name, 'cnt': 2}]
 
   def test_ok(self):
     self.api.force_login(self.user)
@@ -459,12 +459,17 @@ class CouponDistTest(BaseSetup):
 
   def test_invalid_theme(self):
     self.api.force_login(self.user)
-    res = self.api.put(self.url, {'theme': '存在しないテーマ', 'cnt': 2}, format='json')
+    res = self.api.put(self.url, [{'theme': '存在しないテーマ', 'cnt': 2}], format='json')
     self.assertEqual(res.status_code, 400)
 
   def test_no_cnt(self):
     self.api.force_login(self.user)
-    res = self.api.put(self.url, {'theme': self.theme.name}, format='json')
+    res = self.api.put(self.url, [{'theme': self.theme.name}], format='json')
+    self.assertEqual(res.status_code, 400)
+
+  def test_empty_list(self):
+    self.api.force_login(self.user)
+    res = self.api.put(self.url, [], format='json')
     self.assertEqual(res.status_code, 400)
 
 

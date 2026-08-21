@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { clientThemes, subscCancel } from "../api/client"
+import { clientThemes, couponDist, subscCancel } from "../api/client"
 import { useNavigate } from "react-router-dom"
 
 // クライアント ダッシュボード
@@ -7,10 +7,14 @@ export default function Client() {
   const navigate = useNavigate()
   const [client, setClient] = useState('')
   const [themes, setThemes] = useState([])
+  const [maxCnt, setMaxCnt] = useState(0)
+  const [totalCnt, setTotalCnt] = useState(0)
+  const [dist, setDist] = useState({})
   const [subsc, setSubsc] = useState('')
   const [isFree, setIsFree] = useState(false)
   const [isCancel, setIsCancel] = useState(false)
   const [logErr, setLogErr] = useState(false)
+  const [resDist, setResDist] = useState(null)
   const [resCancel, setResCancel] = useState(null)
 
   useEffect(() => {
@@ -25,8 +29,11 @@ export default function Client() {
         }
         setClient(res.client)
         setThemes(res.themes)
+        setMaxCnt(res.max_cnt)
+        setTotalCnt(res.max_cnt)
         setSubsc(res.subsc)
         setIsFree(res.is_free)
+        setDist(Object.fromEntries(res.themes.map(t => [t.name, t.coupon_cnt ?? 0])))
       } catch (err) {
         // 再ログイン
         setLogErr(true)
@@ -47,6 +54,20 @@ export default function Client() {
     }
   }
 
+  const handleDistChange = (name, num) => {
+    const newDist = { ...dist, [name]: num}
+    const total = Object.values(newDist).reduce((a, d) => a + d, 0)
+    if (total > maxCnt) return
+    setDist(newDist)
+    setTotalCnt(total)
+  }
+
+  const handleDistSave = async () => {
+    const body = Object.entries(dist).map(([theme, cnt]) => ({ theme, cnt }))
+    await couponDist(body)
+    setResDist(true)
+  }
+
   return (
     <div className='client'>
       <h2>クライアント ダッシュボード</h2>
@@ -59,6 +80,8 @@ export default function Client() {
       {/* 解約処理結果 */}
       {resCancel && <p className='cancel_err'>{resCancel}</p>}
       {isFree && <p>- サブスク不要アカウント</p>}
+
+      {/* サブスク情報 */}
       {subsc &&
         <table className='subsc_info'>
           <thead>
@@ -73,9 +96,45 @@ export default function Client() {
           </tbody>
         </table>
       }
+
+      {/* クーポン */}
+      {maxCnt > 0 &&
+        <div className='coupon_dist'>
+          <div className='client_head'>
+            <div>
+              <h3>クーポン配分設定</h3>
+              <p>- 毎月更新のタイミングで配布されます</p>
+            </div>
+            <p>{totalCnt} / {maxCnt} 枚</p>
+            <button className='btn_nxt' onClick={handleDistSave} disabled={totalCnt!=maxCnt}>分配確定</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr><td>テーマ</td><td>枚数</td></tr>
+            </thead>
+            <tbody>
+              {themes.map(t => (
+                <tr key={t.id}>
+                  <td>{t.name}</td>
+                  <td>
+                    <input type='number' placeholder={t.coupon_cnt} min={0} value={dist[t.name]}
+                      onChange={(e) => handleDistChange(t.name, Number(e.target.value))} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className='total'>
+
+          </div>
+        </div>
+      }
+
+      {/* テーマ情報 */}
       {themes.map((t, i) => (
         <div key={t.id} className='theme_list'>
-          <div className='theme_head'>
+          <div className='client_head'>
             <h3><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
 
             <div className='theme_head_price'>
@@ -115,6 +174,9 @@ export default function Client() {
       {/* ログインエラー */}
       {logErr && <RetryModal onClose={() => setLogErr(false)} />}
 
+      {/* 分配確定 */}
+      {resDist && <DistModal onClose={() => setResDist(false)} />}
+
       {/* 解約確認 */}
       {isCancel && <CancelModal onClose={() => setIsCancel(false)} onCancel={handleCancel} />}
     </div>
@@ -141,6 +203,30 @@ function RetryModal({ onClose }) {
           お願いします
         </p>
         <button className='btn_back' onClick={() => navigate('/client/login')}>ログイン</button>
+      </div>
+    </div>
+  )
+}
+
+// 分配登録完了モーダル
+function DistModal({ onClose }) {
+  const navigate = useNavigate()
+
+  return (
+    <div
+      className='modal_bk'
+      onClick={onClose}
+      role='dialog'
+      aria-modal='true'
+      aria-label='クーポン分配確定'
+    >
+      <div className='modal' onClick={(e) => e.stopPropagation()}>
+        <button className='modal_close' onClick={onClose} aria-label='閉じる'>❌</button>
+        <h2>クーポン分配確定</h2>
+        <p>
+          クーポンの分配を確定しました<br />
+          次回更新時より適用されます
+        </p>
       </div>
     </div>
   )

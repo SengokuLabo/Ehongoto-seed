@@ -163,11 +163,15 @@ def themes(request):
     } for c in t.coupon_set.all()]
   } for t in themes_obj]
 
+  # 毎月配布分のクーポン最大枚数（基本配布数 + 追加テーマ数）
+  max_cnt = c_subsc_obj.subsc.base_cnt + (c_subsc_obj.subsc.add_cnt * (themes_obj.count()-1)) if c_subsc_obj else 0
+
   # レスポンス
   return Response({
     'client': client_obj.name,
     'themes': theme_list,
     'subsc': c_subsc,
+    'max_cnt': max_cnt,
     'is_free': client_obj.is_free,
   }, status=200)
 
@@ -390,12 +394,9 @@ def coupon_dist(request):
   except json.JSONDecodeError:
     return Response({'error': 'bad request'}, status=400)
 
-  theme = body.get('theme')
-  cnt = body.get('cnt')
-  if not theme or cnt is None:
+  if not isinstance(body, list) or not body:
     return Response({'error': 'bad request'}, status=400)
 
-  # 2. クライアントサブスク取得
   client_obj = models.Client.objects.filter(user=request.user).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=400)
@@ -404,16 +405,24 @@ def coupon_dist(request):
   if not c_client_subsc:
     return Response({'error': 'bad request'}, status=400)
 
-  theme_obj = models.Theme.objects.filter(client=client_obj, name=theme).first()
-  if not theme_obj:
-    return Response({'error': 'bad request'}, status=400)
+  # 2. サブスク単位で処理
+  with transaction.atomic():
+    for item in body:
+      theme = item.get('theme')
+      cnt = item.get('cnt')
+      if not theme or cnt is None:
+        return Response({'error': 'bad request'}, status=400)
 
-  # 3. クーポン配分を更新
-  models.CouponDist.objects.update_or_create(
-    client_subsc=c_client_subsc,
-    theme=theme_obj,
-    defaults={'coupon_cnt': cnt},
-  )
+      theme_obj = models.Theme.objects.filter(client=client_obj, name=theme).first()
+      if not theme_obj:
+        return Response({'error': 'bad request'}, status=400)
+
+      # 3. クーポン配分を更新
+      models.CouponDist.objects.update_or_create(
+        client_subsc=c_client_subsc,
+        theme=theme_obj,
+        defaults={'coupon_cnt': cnt},
+      )
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
