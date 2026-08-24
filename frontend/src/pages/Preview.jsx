@@ -280,8 +280,8 @@ export default function Preview() {
       </div>
 
       <div className='btns'>
-        <button className='btn_pre' onClick={() => flip(step - 1, 'prev')} disabled={step === 0}>◀</button>
-        <button className='btn_nxt' onClick={() => flip(step + 1, 'next')} disabled={step === spreads.length - 2}>▶</button>
+        <button className='btn_pre' onClick={() => flip(step - 1, 'prev')} disabled={step === 0}>←</button>
+        <button className='btn_nxt' onClick={() => flip(step + 1, 'next')} disabled={step === spreads.length - 2}>→</button>
       </div>
 
       {/*  */}
@@ -300,7 +300,7 @@ export default function Preview() {
             <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} onReady={setSnsCanvas} />
           </div>
           <button className='btn_sns' onClick={handleShare} disabled={!snsCanvas}>
-            シェア or 画像を保存
+            {isPc ? '画像を保存' : 'シェア'}
           </button>
         </>} />}
 

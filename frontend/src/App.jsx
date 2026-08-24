@@ -78,10 +78,10 @@ function TopPage() {
 
 // ページトップにスクローク
 function ScrollTop() {
-  const { pothname } = useLocation()
+  const { pathname } = useLocation()
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [pothname])
+  }, [pathname])
   return null
 }
 

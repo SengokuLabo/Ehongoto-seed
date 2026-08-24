@@ -115,7 +115,7 @@ export default function ImageSelect() {
 
       <div className='btns'>
         <button className='btn_pre' onClick={() => shiftImg(-1)}>←</button>
-        <span>画像切り替え</span>
+        <span>画像切替</span>
         <button className='btn_nxt' onClick={() => shiftImg(+1)}>→</button>
       </div>
 
