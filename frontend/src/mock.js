@@ -1,18 +1,19 @@
 // POST /api/generate レスポンス想定のサンプルデータ
 
 export const mockData = {
-  theme: 'life_timeline',
+  client: 'demo',
+  theme: 'life',
   title: 'ものづくりから始まった',
   spreads: [
-    { sp_num: 0, text1: 'ものづくりから始まる人生楽しい人生あぁたのしい', text2: '', img: { id: 1, img_path: "/media/images/back1.jpg", angle: "90", size: 30, ox: 16, oy: 0, tilt: 2 } },
-    { sp_num: 1, text1: 'ぼくは ものを作るのが好きだった', text2: '', img: { id: 2, img_path: "/media/images/back2.jpg", angle: "90", size: 40, ox: -23, oy: 0, tilt: 10 } },
-    { sp_num: 2, text1: '思い描いたものが形になるのは楽しかった', text2: '', img: { id: 3, img_path: "/media/images/back3.jpg", angle: "90", size: 40, ox: -23, oy: 0, tilt: 10 } },
-    { sp_num: 3, text1: '真面目で愛想が良く みんなに頼られた', text2: '', img: { id: 4, img_path: "/media/images/back4.jpg", angle: "180", size: 40, ox: 0, oy: 0, tilt: 0 } },
-    { sp_num: 4, text1: 'きょうだいが多かったから 孤独ではなかった', text2: '', img: { id: 5, img_path: "/media/images/back5.jpg", angle: "45", size: 40, ox: 15, oy: 0, tilt: -5 } },
-    { sp_num: 5, text1: '困った時も立ち止まらず どうしたら上手くいくか考えた', text2: '', img: { id: 6, img_path: "/media/images/back6.jpg", angle: "45", size: 35, ox: 15, oy: 0, tilt: 10 } },
-    { sp_num: 6, text1: '大人になった今 家族の時間を大切にしている', text2: '', img: { id: 7, img_path: "/media/images/back7.jpg", angle: "180", size: 25, ox: 0, oy: 0, tilt: 3 } },
-    { sp_num: 7, text1: '子どもたちが親のぼくの背中を見て成長していく', text2: '', img: { id: 8, img_path: "/media/images/back8.jpg", angle: "0", size: 50, ox: 0, oy: 0, tilt: -10 } },
-    { sp_num: 8, text1: '自分のやりたいことにチャレンジする姿を 見せ続けたい', text2: '', img: { id: 9, img_path: "/media/images/back9.jpg", angle: "180", size: 40, ox: 0, oy: 0, tilt: 0 } },
+    { sp_num: 0, text1: 'ものづくりから始まった', text2: '', img: { id: 1, img_path: "/media/images/back1.jpg", angle: "30", size: 35, ox: 10, tilt: -13 } },
+    { sp_num: 1, text1: 'ぼくは ものを作るのが好きだった', text2: '', img: { id: 2, img_path: "/media/images/back2.jpg", angle: "90", size: 43, ox: -23, tilt: 10 } },
+    { sp_num: 2, text1: '思い描いたものが形になるのは楽しかった', text2: '', img: { id: 3, img_path: "/media/images/back3.jpg", angle: "90", size: 45, ox: -23, tilt: 15 } },
+    { sp_num: 3, text1: '真面目で愛想が良く みんなに頼られた', text2: '', img: { id: 4, img_path: "/media/images/back4.jpg", angle: "170", size: 40, ox: 1, tilt: 10 } },
+    { sp_num: 4, text1: 'きょうだいが多かったから 孤独ではなかった', text2: '', img: { id: 5, img_path: "/media/images/back5.jpg", angle: "30", size: 45, ox: 10, tilt: -15 } },
+    { sp_num: 5, text1: '困った時も立ち止まらず どうしたら上手くいくか考えた', text2: '', img: { id: 6, img_path: "/media/images/back6.jpg", angle: "30", size: 35, ox: 10, tilt: 5 } },
+    { sp_num: 6, text1: '大人になった今 家族の時間を大切にしている', text2: '', img: { id: 7, img_path: "/media/images/back7.jpg", angle: "170", size: 25, ox: -2, tilt: -15 } },
+    { sp_num: 7, text1: '子どもたちが親のぼくの背中を見て成長していく', text2: '', img: { id: 8, img_path: "/media/images/back8.jpg", angle: "0", size: 53, ox: 1, tilt: -10 } },
+    { sp_num: 8, text1: '自分のやりたいことにチャレンジする姿を 見せ続けたい', text2: '', img: { id: 9, img_path: "/media/images/back9.jpg", angle: "170", size: 40, ox: 0, tilt: -5 } },
     { sp_num: 9, text1: 'おわり', text2: '', img: null },
   ],
   face_parts: {
@@ -70,6 +71,15 @@ export const mockData = {
     { id: 11, img_path: "/media/images/back11.jpg", angle: "30", size: 42, ox: 10, tilt: -10 },
     { id: 12, img_path: "/media/images/back12.jpg", angle: "0", size: 0, ox: 0, tilt: 0 },
   ],
+  face: {
+    hair: 1,
+    eye: 1,
+    nose: 1,
+    mouth: 1,
+    hairColor: '#3d1f0d',
+    skinColor: '#f0c08a',
+    eyeTurn: true,
+  },
   log_id: 3,
   price: { pdf: 300, soft: 3000, hard: 8000 },
 }

@@ -2,9 +2,11 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate, useLocation, Link, useParams } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import BookCanvas from '../components/BookCanvas'
+import WaitModal from '../components/WaitModal'
 import { getEhon } from '../api/client'
 import { drawSpread } from '../utils/drawSpread'
 import { mockData } from '../mock'
+import Modal from '../components/Modal'
 
 const mock = import.meta.env.DEV ? mockData : null
 
@@ -12,11 +14,13 @@ const mock = import.meta.env.DEV ? mockData : null
 export default function Preview() {
   const navigate = useNavigate()
   const location = useLocation()
+  const sharing = useRef(false)
   const initState = location.state || {}
   const [result, setResult] = useState(initState.result)
-  const [face, setFace] = useState(initState.face)
+  const [face, setFace] = useState(initState.face ?? mock?.face)
   const [isModal, setIsModal] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [snsCanvas, setSnsCanvas] = useState(null)
 
   // ダウンロード用トークン
   const { token } = useParams()
@@ -162,9 +166,41 @@ export default function Preview() {
     return <p>読み込み中．．．</p>
   }
 
+  // SNSシェア
+  const handleShare = () => {
+    if (!snsCanvas || sharing.current) return
+    snsCanvas.toBlob(async (blob) => {
+      const file = new File([blob], 'ehon.png', { type: 'image/png' })
+      const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          sharing.current = true
+          await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
+        } catch (e) {
+          if (e.name !== 'AbortError') console.error(e)
+        } finally {
+          sharing.current = false
+        }
+      } else {
+        // フォールバック
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'ehon.png'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png')
+  }
+
   return (
     <div className='preview'>
-      <h2>オリジナル絵本</h2>
+      <div className='preview_head'>
+        <h2>オリジナル絵本</h2>
+        <button className='btn_sns' onClick={() => setIsModal(true)}>SNS</button>
+      </div>
       <div className='thankyou' hidden={isPreview}>
         <h4>ご購入ありがとうございます。</h4>
         <div className='btns_dl'>
@@ -173,7 +209,6 @@ export default function Preview() {
           >
             {pdfLoading ? '生成中．．．' : 'PDFダウンロード'}
           </button>
-          <button className='btn_sns' onClick={() => setIsModal(true)}>SNS</button>
         </div>
       </div>
 
@@ -247,74 +282,27 @@ export default function Preview() {
         <button className='btn_nxt' onClick={() => flip(step + 1, 'next')} disabled={step === spreads.length - 2}>▶</button>
       </div>
 
+      {/*  */}
       {isPreview &&
         <div className='btns_trans'>
           <button className='btn_back' onClick={handlePre}>戻る</button>
-          <button className='btn_sns' onClick={() => setIsModal(true)}>SNS</button>
           <button className='btn_driv' onClick={handleNext} hidden={!isPreview}>購入</button>
         </div>
       }
 
-      {isModal && (
-        <ShareModal
-          spread={{...spreads[0]}}
-          face={face} faceParts={faceParts}
-          onClose={() => setIsModal(false)}
-        />
-      )}
+      {/* SNSシェアモーダル */}
+      {isModal &&
+        <Modal onClose={() => setIsModal(false)} title={'SNSシェア'}
+        cont={<>
+          <div className='book_outer'>
+            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} onReady={setSnsCanvas} />
+          </div>
+          <button className='btn_sns' onClick={handleShare} disabled={!snsCanvas}>
+            シェア or 画像を保存
+          </button>
+        </>} />}
 
-      {pdfLoading && (<PdfModal />)}
-    </div>
-  )
-}
-
-// SNSシェアモーダル
-function ShareModal({ spread, face, faceParts, onClose }) {
-  return (
-    <div
-      className='modal_bk'
-      onClick={onClose}
-      role='dialog'
-      aria-modal='true'
-      aria-label='SNSシェア'
-    >
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる'>✖︎</button>
-        <h2>シェアする</h2>
-        <div className='book_outer'>
-          <BookCanvas
-            spread={spread}
-            face={face}
-            faceParts={faceParts}
-            isPreview={false}
-            classNm='sns'
-          />
-        </div>
-        <div className='btns_share'>
-          <button
-            className='btn_share x'
-            onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`「${spread?.text1}」を作ったよ！ #えほんごとのたね`)}`, '_blank')}
-          >X（Twitter）でシェア</button>
-          <button
-            className='btn_share line'
-            onClick={() => window.open(`https://line.me/R/share?text=${encodeURIComponent(`「${spread?.text1}」を作ったよ！`)}`, '_blank')}
-          >LINEでシェア</button>
-          <button
-            className='btn_share instagram'
-            onClick={() => alert('画像を保存して、Instagramアプリから投稿してね！')}
-          >Instagramへ（画像保存）</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// PDF生成中モーダル
-function PdfModal() {
-  return (
-    <div className='pdf_modal'>
-      <div className='spinner'></div>
-      <p>PDF生成中．．．</p>
+      {pdfLoading && (<WaitModal text={'PDF生成中'} />)}
     </div>
   )
 }

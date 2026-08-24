@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react"
 import { clientThemes, couponDist, subscCancel } from "../api/client"
 import { useNavigate } from "react-router-dom"
+import Modal from '../components/Modal'
 
 // クライアント ダッシュボード
 export default function Client() {
   const navigate = useNavigate()
-  const [client, setClient] = useState('')
-  const [themes, setThemes] = useState([])
-  const [maxCnt, setMaxCnt] = useState(0)
-  const [totalCnt, setTotalCnt] = useState(0)
-  const [dist, setDist] = useState({})
-  const [subsc, setSubsc] = useState('')
-  const [isFree, setIsFree] = useState(false)
-  const [isCancel, setIsCancel] = useState(false)
-  const [logErr, setLogErr] = useState(false)
-  const [resDist, setResDist] = useState(null)
-  const [resCancel, setResCancel] = useState(null)
+
+  const [client, setClient] = useState('')          // クライアント名
+  const [themes, setThemes] = useState([])          // テーマリスト
+  const [logErr, setLogErr] = useState(false)       // ログインエラーモーダル
+
+  const [maxCnt, setMaxCnt] = useState(0)           // クーポン総数
+  const [totalCnt, setTotalCnt] = useState(0)       // クーポン入力数
+  const [dist, setDist] = useState({})              // クーポン割振
+  const [resDist, setResDist] = useState(null)      // クーポン分配モーダル
+
+  const [subsc, setSubsc] = useState('')            // サブスク情報
+  const [isFree, setIsFree] = useState(false)       // サブスク不要アカウント判定
+  const [resCancel, setResCancel] = useState(null)  // サブスク解約結果
+  const [isCancel, setIsCancel] = useState(false)   // サブスク解約モーダル
+  const [isCheck, setIsCheck] = useState(false)     // サブスク解約チェック
 
   useEffect(() => {
     (async () => {
@@ -63,9 +68,14 @@ export default function Client() {
   }
 
   const handleDistSave = async () => {
-    const body = Object.entries(dist).map(([theme, cnt]) => ({ theme, cnt }))
-    await couponDist(body)
-    setResDist(true)
+    try {
+
+      const body = Object.entries(dist).map(([theme, cnt]) => ({ theme, cnt }))
+      await couponDist(body)
+      setResDist(<p>クーポンの分配を確定しました<br />次回更新時より適用されます</p>)
+    } catch (err) {
+      setResDist(<p>{err.error || '配分の登録に失敗しました'}</p>)
+    }
   }
 
   return (
@@ -125,9 +135,6 @@ export default function Client() {
               ))}
             </tbody>
           </table>
-          <div className='total'>
-
-          </div>
         </div>
       }
 
@@ -172,91 +179,38 @@ export default function Client() {
       ))}
 
       {/* ログインエラー */}
-      {logErr && <RetryModal onClose={() => setLogErr(false)} />}
+      {logErr &&
+        <Modal onClose={() => setLogErr(false)} title='ログイン失敗'
+        cont={<>
+          <p>
+            再ログインもしくは新規登録を<br />
+            お願いします
+          </p>
+          <button className='btn_back' onClick={() => navigate('/client/login')}>ログイン</button>
+        </>}
+        />}
 
       {/* 分配確定 */}
-      {resDist && <DistModal onClose={() => setResDist(false)} />}
+      {resDist &&
+        <Modal onClose={() => setResDist(null)} title='クーポン分配確定'
+        cont={<>{resDist}</>}
+        />}
 
       {/* 解約確認 */}
-      {isCancel && <CancelModal onClose={() => setIsCancel(false)} onCancel={handleCancel} />}
-    </div>
-  )
-}
-
-// 再ログインモーダル
-function RetryModal({ onClose }) {
-  const navigate = useNavigate()
-
-  return (
-    <div
-      className='modal_bk'
-      onClick={onClose}
-      role='dialog'
-      aria-modal='true'
-      aria-label='ログイン失敗'
-    >
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる'>❌</button>
-        <h2>ログイン失敗</h2>
-        <p>
-          再ログインもしくは新規登録を<br />
-          お願いします
-        </p>
-        <button className='btn_back' onClick={() => navigate('/client/login')}>ログイン</button>
-      </div>
-    </div>
-  )
-}
-
-// 分配登録完了モーダル
-function DistModal({ onClose }) {
-  const navigate = useNavigate()
-
-  return (
-    <div
-      className='modal_bk'
-      onClick={onClose}
-      role='dialog'
-      aria-modal='true'
-      aria-label='クーポン分配確定'
-    >
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる'>❌</button>
-        <h2>クーポン分配確定</h2>
-        <p>
-          クーポンの分配を確定しました<br />
-          次回更新時より適用されます
-        </p>
-      </div>
-    </div>
-  )
-}
-
-// 解約確認モーダル
-function CancelModal({ onClose, onCancel }) {
-  const [isCheck, setIsCheck] = useState(false)
-
-  return (
-    <div
-      className='modal_bk'
-      onClick={onClose}
-      role='dialog'
-      aria-modal='true'
-      aria-label='解約確認'
-    >
-      <div className='modal' onClick={(e) => e.stopPropagation()}>
-        <h2>解約確認</h2>
-        <button className='modal_close' onClick={onClose} aria-label='閉じる'>❌</button>
-        <ul className='modal_cancel'>
-          <li>解約すると一切のサービスがご利用できなくなります</li>
-          <li>未使用クーポンは使用できなくなります</li>
-          <li>解約後の再登録は、無料トライアルの対象外となります</li>
-        </ul>
-        <label className='input_check'>
-          <input type='checkbox' onChange={e => setIsCheck(e.target.checked)} />本当に解約しますか？
-        </label>
-        <button className='btn_back' onClick={onCancel} disabled={!isCheck}>解約</button>
-      </div>
+      {isCancel &&
+        <Modal onClose={() => setIsCancel(false)} title='解約確認'
+        cont={<>
+          <ul className='modal_cancel'>
+            <li>解約すると一切のサービスがご利用できなくなります</li>
+            <li>未使用クーポンは使用できなくなります</li>
+            <li>解約後の再登録は、無料トライアルの対象外となります</li>
+          </ul>
+          <label className='input_check'>
+            <input type='checkbox' onChange={e => setIsCheck(e.target.checked)} />本当に解約しますか？
+          </label>
+          <button className='btn_back' onClick={handleCancel} disabled={!isCheck}>解約</button>
+        </>}
+        />}
     </div>
   )
 }

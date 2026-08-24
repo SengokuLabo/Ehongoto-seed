@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { generate, getQuestions } from '../api/client';
+import WaitModal from '../components/WaitModal';
 
 // 質問フォーム
 export default function QuestionForm() {
@@ -196,17 +197,12 @@ export default function QuestionForm() {
           onClick={isLastStep ? handleGenerate : nextQuestion}
           disabled={isLastStep ? !canGenerate || generating : false}
         >
-          {generating ? '生成中．．．' : isLastStep ? '生成する' : '次へ'}
+          {generating ? '生成中' : isLastStep ? '生成する' : '次へ'}
         </button>
       </div>
 
       {/* ローディング描写 */}
-      {generating && (
-        <div className='pdf_modal'>
-          <div className='spinner'></div>
-          <p>物語を生成中．．．</p>
-        </div>
-      )}
+      {generating && <WaitModal text={'物語を生成中'} />}
 
       {/* エラー表示 */}
       {genError && <p className='error'>{genError}</p>}
