@@ -114,9 +114,9 @@ export default function ImageSelect() {
       </div>
 
       <div className='btns'>
-        <button className='btn_pre' onClick={() => shiftImg(-1)}>◀</button>
+        <button className='btn_pre' onClick={() => shiftImg(-1)}>←</button>
         <span>画像切り替え</span>
-        <button className='btn_nxt' onClick={() => shiftImg(+1)}>▶</button>
+        <button className='btn_nxt' onClick={() => shiftImg(+1)}>→</button>
       </div>
 
       <div className='btns'>
@@ -125,8 +125,8 @@ export default function ImageSelect() {
       </div>
 
       <div className='btns btns_trans'>
-        <button className='btn_back' onClick={handlePre}>{isFace ? '顔選択' : '質問'}へ戻る</button>
-        <button className='btn_driv' onClick={handleNext} disabled={!isAllOk}>確認へ進む</button>
+        <button className='btn_back' onClick={handlePre}>戻る</button>
+        <button className='btn_driv' onClick={handleNext} disabled={!isAllOk}>進む</button>
       </div>
     </div>
   )

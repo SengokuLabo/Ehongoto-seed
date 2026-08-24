@@ -21,6 +21,7 @@ export default function Preview() {
   const [isModal, setIsModal] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [snsCanvas, setSnsCanvas] = useState(null)
+  const isPc = navigator.maxTouchPoints == 0    // True:PC False:スマホ
 
   // ダウンロード用トークン
   const { token } = useParams()
@@ -168,27 +169,22 @@ export default function Preview() {
 
   // SNSシェア
   const handleShare = () => {
-    console.log('1. called', snsCanvas)
     if (!snsCanvas || sharing.current) return
-    console.log('2. toBlob start')
     snsCanvas.toBlob(async (blob) => {
-      console.log('3. blob:', blob)
       const file = new File([blob], 'ehon.png', { type: 'image/png' })
       const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
-      if (navigator.canShare?.({ files: [file] })) {
+      if (!isPc && navigator.canShare?.({ files: [file] })) {
+        // スマホ：シェアシート
         try {
           sharing.current = true
           await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
-          console.log('4. share completed')
         } catch (e) {
-          console.log('4. share error:', e.name, e.message)
           if (e.name !== 'AbortError') console.error(e)
         } finally {
           sharing.current = false
         }
       } else {
-        // フォールバック
-        console.log('3b. fallback download')
+        // PC：表紙ダウンロード
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
