@@ -179,13 +179,16 @@ export default function Preview() {
         try {
           sharing.current = true
           await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
+          console.log('4. share completed')
         } catch (e) {
+          console.log('4. share error:', e.name, e.message)
           if (e.name !== 'AbortError') console.error(e)
         } finally {
           sharing.current = false
         }
       } else {
         // フォールバック
+        console.log('3b. fallback download')
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
