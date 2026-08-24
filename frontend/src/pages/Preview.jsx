@@ -168,8 +168,11 @@ export default function Preview() {
 
   // SNSシェア
   const handleShare = () => {
+    console.log('1. called', snsCanvas)
     if (!snsCanvas || sharing.current) return
+    console.log('2. toBlob start')
     snsCanvas.toBlob(async (blob) => {
+      console.log('3. blob:', blob)
       const file = new File([blob], 'ehon.png', { type: 'image/png' })
       const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
       if (navigator.canShare?.({ files: [file] })) {
