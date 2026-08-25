@@ -20,7 +20,7 @@ export default function Preview() {
   const [face, setFace] = useState(initState.face ?? mock?.face)
   const [isModal, setIsModal] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
-  const [snsCanvas, setSnsCanvas] = useState(null)
+  const [snsBlob, setSnsBlob] = useState(null)
   const isPc = navigator.maxTouchPoints == 0    // True:PC False:スマホ
 
   // ダウンロード用トークン
@@ -168,33 +168,31 @@ export default function Preview() {
   }
 
   // SNSシェア
-  const handleShare = () => {
-    if (!snsCanvas || sharing.current) return
-    snsCanvas.toBlob(async (blob) => {
-      const file = new File([blob], 'ehon.png', { type: 'image/png' })
-      const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
-      if (!isPc && navigator.canShare?.({ files: [file] })) {
-        // スマホ：シェアシート
-        try {
-          sharing.current = true
-          await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
-        } catch (e) {
-          if (e.name !== 'AbortError') console.error(e)
-        } finally {
-          sharing.current = false
-        }
-      } else {
-        // PC：表紙ダウンロード
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'ehon.png'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+  const handleShare = async () => {
+    if (!snsBlob || sharing.current) return
+    const file = new File([snsBlob], 'ehon.png', { type: 'image/png' })
+    const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
+    if (!isPc && navigator.canShare?.({ files: [file] })) {
+      // スマホ：シェアシート
+      try {
+        sharing.current = true
+        await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error(e)
+      } finally {
+        sharing.current = false
       }
-    }, 'image/png')
+    } else {
+      // PC：表紙ダウンロード
+      const url = URL.createObjectURL(snsBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'ehon.png'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
   }
 
   return (
@@ -297,9 +295,10 @@ export default function Preview() {
         <Modal onClose={() => setIsModal(false)} title={'SNSシェア'}
         cont={<>
           <div className='book_outer'>
-            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} onReady={setSnsCanvas} w={W*0.7} />
+            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false}
+              onReady={canvas => canvas.toBlob(b => setSnsBlob(b), 'image/png')} w={W * 0.7} />
           </div>
-          <button className='btn_sns' onClick={handleShare} disabled={!snsCanvas}>
+          <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
             {isPc ? '画像を保存' : 'シェア'}
           </button>
         </>} />}
