@@ -11,13 +11,14 @@ export default function ImageSelect() {
   const navigate = useNavigate()
   const location = useLocation()
   const { result, face } = location.state || {}
-  const imgs = result?.images ?? mock.images
-  const faceParts = result?.face_parts ?? mock.face_parts
+  const imgs = result?.images ?? mock?.images
+  const faceParts = result?.face_parts ?? mock?.face_parts
   const lkToken = location.state?.lkToken ?? ''
-  const isFace = result.face_parts && Object.keys(result.face_parts).length > 0
+  const isFace = result?.face_parts && Object.keys(result.face_parts).length > 0
+  const W = Math.min(Math.floor(window.innerWidth * 0.9), 720)
 
   const [spreads, setSpreads] = useState(() => {
-    const raw = result?.spreads ?? mock.spreads
+    const raw = result?.spreads ?? mock?.spreads
     return raw.map((sp, i) => ({
       ...sp,
       img: sp.img ?? (i === 0 ? imgs[0] : null)
@@ -97,15 +98,8 @@ export default function ImageSelect() {
 
       {/* プレビュー */}
       <div className='book_outer'>
-        <BookCanvas
-          spread={spreads[step]}
-          face={face}
-          faceParts={faceParts}
-          isPreview={!isCover && !lkToken}
-        />
-        {!isCover &&
-          <div className='book_spine' />
-        }
+        <BookCanvas spread={spreads[step]} face={face} faceParts={faceParts} isPreview={!isCover && !lkToken} w={W} />
+        {!isCover &&  <div className='book_spine' />}
       </div>
       <div className='book_dots'>
         {spreads.slice(0, -1).map((sp, idx) => (

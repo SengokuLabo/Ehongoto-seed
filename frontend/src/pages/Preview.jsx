@@ -297,7 +297,7 @@ export default function Preview() {
         <Modal onClose={() => setIsModal(false)} title={'SNSシェア'}
         cont={<>
           <div className='book_outer'>
-            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} onReady={setSnsCanvas} />
+            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} onReady={setSnsCanvas} w={W*0.7} />
           </div>
           <button className='btn_sns' onClick={handleShare} disabled={!snsCanvas}>
             {isPc ? '画像を保存' : 'シェア'}
