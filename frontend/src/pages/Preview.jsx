@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { useNavigate, useLocation, Link, useParams } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import BookCanvas from '../components/BookCanvas'
 import WaitModal from '../components/WaitModal'
@@ -66,6 +66,16 @@ export default function Preview() {
       setFace(apiData.face)
     }
   }, [apiData])
+
+  // SNSシェア用canvas作成
+  useEffect(() => {
+    if (!isModal || snsBlob) return
+    const off = document.createElement('canvas')
+    off.width = 720
+    off.height = 1014
+    drawSpread(off, spreads[0], face, faceParts, false)
+    .then(() => off.toBlob(b => setSnsBlob(b), 'image/png'))
+  }, [isModal])
 
   // PDFダウンロード
   const generatePdf = async () => {
@@ -295,8 +305,7 @@ export default function Preview() {
         <Modal onClose={() => setIsModal(false)} title={'SNSシェア'}
         cont={<>
           <div className='book_outer'>
-            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false}
-              onReady={canvas => canvas.toBlob(b => setSnsBlob(b), 'image/png')} w={W * 0.7} />
+            <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} w={W * 0.7} />
           </div>
           <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
             {isPc ? '画像を保存' : 'シェア'}
