@@ -282,6 +282,7 @@ class ClientSubsc(models.Model):
   client = models.ForeignKey(Client, on_delete=models.PROTECT)
   subsc = models.ForeignKey(Subsc, on_delete=models.PROTECT)
   sp_sub_id = models.CharField(max_length=100)
+  sp_cust_id = models.CharField(max_length=100, blank=True, default='')
   status = models.CharField(max_length=15, choices=SUBSC_TYPE, default=SUBSC_ACTIVE)
   start_at = models.DateTimeField(auto_now_add=True)
   end_at = models.DateTimeField(blank=True, null=True)

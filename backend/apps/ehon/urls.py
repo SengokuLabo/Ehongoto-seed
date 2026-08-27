@@ -28,4 +28,5 @@ urlpatterns = [
   path('client/subsc/plans', views_client.subsc_plan, name='サブスク一覧取得'),
   path('client/subsc/signup', views_client.subsc_signup, name='サブスク登録'),
   path('client/subsc/cancel', views_client.subsc_cancel, name='サブスク解約'),
+  path('client/subsc/portal', views_client.subsc_portal, name='サブスク変更ポータル')
 ]

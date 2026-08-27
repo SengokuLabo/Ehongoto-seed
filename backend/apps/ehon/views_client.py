@@ -289,12 +289,17 @@ def subsc_signup(request):
   if not subsc_obj:
     return Response({'error': 'bad request'}, status=400)
 
+  # 再登録時はトライアルなし
+  has_past = models.ClientSubsc.objects.filter (
+    client=client_obj, status=models.ClientSubsc.SUBSC_CANCEL
+  ).exists()
+
   # 2. stripeセッション作成
   session = stripe.checkout.Session.create(
     payment_method_types=['card'],
     line_items=[{'price': subsc_obj.sp_price_id, 'quantity': 1}],
     mode='subscription',
-    subscription_data={'trial_period_days': 30},
+    subscription_data={} if has_past else {'trial_period_days': 30},
     success_url=f"{os.environ.get('FRONT_URL')}/client",
     cancel_url=f"{os.environ.get('FRONT_URL')}/client/subsc",
     metadata={'type': 'subsc', 'client_id': str(client_obj.id), 'subsc_id': str(subsc_obj.id)},
@@ -310,6 +315,7 @@ def _subsc_signup(obj):
   client_id = obj.get('metadata', {}).get('client_id')
   subsc_id = obj.get('metadata', {}).get('subsc_id')
   sp_sub_id = obj.get('subscription', '')
+  sp_cust_id = obj.get('customer', '')
   client_obj = models.Client.objects.filter(id=client_id).first()
   subsc_obj = models.Subsc.objects.filter(id=subsc_id).first()
   if not client_obj or not subsc_obj:
@@ -318,6 +324,7 @@ def _subsc_signup(obj):
     client=client_obj,
     subsc=subsc_obj,
     sp_sub_id=sp_sub_id,
+    sp_cust_id=sp_cust_id,
     status=models.ClientSubsc.SUBSC_ACTIVE,
   )
 
@@ -426,3 +433,36 @@ def coupon_dist(request):
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
+
+
+# サブスク登録変更ポータル
+@api_view(['POST'])
+def subsc_portal(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  # 2. サブスク情報取得
+  c_client_subsc = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_client_subsc or not c_client_subsc.sp_cust_id:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 3. Stripe実行
+  portal = stripe.billing_portal.Session.create(
+    customer=c_client_subsc.sp_cust_id,
+    return_url=f"{os.environ.get('FRONT_URL')}/client",
+  )
+
+  # レスポンス
+  return Response({'portal_url': portal.url}, status=200)
+
+

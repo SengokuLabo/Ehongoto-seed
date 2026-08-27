@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { clientThemes, couponDist, subscCancel } from "../api/client"
+import { clientThemes, couponDist, subscCancel, subscPortal } from "../api/client"
 import { useNavigate } from "react-router-dom"
 import Modal from '../components/Modal'
 
@@ -59,6 +59,17 @@ export default function Client() {
     }
   }
 
+  // サブスク登録更新ポータル
+  const handlePortal = async () => {
+    try {
+      const res = await subscPortal()
+      window.location.href = res.portal_url
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  // クーポン分配登録
   const handleDistChange = (name, num) => {
     const newDist = { ...dist, [name]: num}
     const total = Object.values(newDist).reduce((a, d) => a + d, 0)
@@ -67,9 +78,9 @@ export default function Client() {
     setTotalCnt(total)
   }
 
+  // クーポン分配登録
   const handleDistSave = async () => {
     try {
-
       const body = Object.entries(dist).map(([theme, cnt]) => ({ theme, cnt }))
       await couponDist(body)
       setResDist(<p>クーポンの分配を確定しました<br />次回更新時より適用されます</p>)
@@ -81,10 +92,10 @@ export default function Client() {
   return (
     <div className='client'>
       <h2>クライアント ダッシュボード</h2>
-      <div className='theme_head'>
+      <div className='client_head'>
         <h3><small>クライアント名:</small> {client}</h3>
         {!isFree &&
-          <button className='btn_back' onClick={() => setIsCancel(true)}>解約</button>
+          <button className='btn_pre' onClick={() => setIsCancel(true)}>解約</button>
         }
       </div>
       {/* 解約処理結果 */}
@@ -93,18 +104,24 @@ export default function Client() {
 
       {/* サブスク情報 */}
       {subsc &&
-        <table className='subsc_info'>
-          <thead>
-            <tr><td>ステータス</td><td>プラン</td><td>登録日</td></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{subsc.status}</td>
-              <td>{subsc.plan}</td>
-              <td>{new Date(subsc.start_at).toLocaleDateString('ja-JP')}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className='subsc_info'>
+          <table>
+            <thead>
+              <tr><td>ステータス</td><td>プラン</td><td>登録日</td></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{subsc.status}</td>
+                <td>{subsc.plan}</td>
+                <td>{new Date(subsc.start_at).toLocaleDateString('ja-JP')}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className='btns'>
+            <div></div>
+            <button className='btn_driv' onClick={handlePortal}>サブスク情報を確認</button>
+          </div>
+        </div>
       }
 
       {/* クーポン */}
