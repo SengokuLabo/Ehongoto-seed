@@ -442,11 +442,6 @@ def subsc_portal(request):
   if not request.user.is_authenticated:
     return Response({'error': 'bad request'}, status=401)
 
-  try:
-    body = json.loads(request.body)
-  except json.JSONDecodeError:
-    return Response({'error': 'bad request'}, status=401)
-
   client_obj = models.Client.objects.filter(user=request.user).first()
   if not client_obj:
     return Response({'error': 'bad request'}, status=401)
