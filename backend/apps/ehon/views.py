@@ -384,3 +384,43 @@ def get_themes(request):
 
   # レスポンス
   return Response({'themes': theme_list}, status=200)
+
+
+# ホーム画面用
+@api_view(['GET'])
+def get_home(request):
+  # 1. ehongotoテーマ取得
+  ehn_client_obj = models.Client.objects.filter(is_free=True).order_by('id').first()
+  if not ehn_client_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  themes_obj = models.Theme.objects.filter(client=ehn_client_obj, is_active=True).order_by('id')
+  theme_obj = themes_obj.first()
+  if not theme_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  theme_list = [{
+    'client': t.client.name,
+    'theme': t.name,
+    'label': t.label,
+    'icon': f"{os.environ.get('FRONT_URL')}/media/logos/{t.icon}",
+    'desc': t.desc,
+  } for t in themes_obj]
+
+  # 2. クライアント一覧取得
+  client_obj = models.Client.objects.filter(is_active=True).order_by('id')
+  client_list = [{
+    'client': c.name,
+    'label': c.label,
+    'logo': f"{os.environ.get('FRONT_URL')}/media/logos/{c.logo}",
+    'desc': c.desc,
+  } for c in client_obj]
+
+  # レスポンス
+  return Response({
+    'themes': theme_list,
+    'clients': client_list,
+    'price_pdf': theme_obj.price_pdf,
+    'price_soft': theme_obj.price_soft,
+    'price_hard': theme_obj.price_hard,
+    }, status=200)

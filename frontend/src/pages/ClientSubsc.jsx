@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { subscPlans, subscSignup } from '../api/client'
 import { useNavigate } from 'react-router-dom'
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // サブスク登録フォーム
 export default function ClientSubsc() {
@@ -40,49 +41,52 @@ export default function ClientSubsc() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='client_subsc'>
-      <h2>クライアント 契約</h2>
-      {resErr}
-      <div className='subsc_list'>
-        <table>
-          <thead><tr><td>選択</td><td>プラン名</td><td>月額</td><td>クーポン枚数</td></tr></thead>
-          <tbody>
-            {subscs.map((s, i) => (
-              <tr key={s.id}>
-                <td><input type='radio' name='plan' value={s.id} onChange={() => setSubscId(s.id)} defaultChecked={s.id == subscs[0].id} /></td>
-                <td>{s.name}</td>
-                <td>¥ {s.price.toLocaleString('ja-JP')} /月</td>
-                <td>{s.base_cnt} 枚</td>
-              </tr>
-            ))}
-          </tbody>
+    <section className='client_subsc'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クライアント 契約</h2>
+        {resErr}
+        <div className='subsc_list fade_in'>
+          <table>
+            <thead><tr><td>選択</td><td>プラン名</td><td>月額</td><td>クーポン枚数</td></tr></thead>
+            <tbody>
+              {subscs.map((s, i) => (
+                <tr key={s.id}>
+                  <td><input type='radio' name='plan' value={s.id} onChange={() => setSubscId(s.id)} defaultChecked={s.id == subscs[0].id} /></td>
+                  <td>{s.name}</td>
+                  <td>¥ {s.price.toLocaleString('ja-JP')} /月</td>
+                  <td>{s.base_cnt} 枚</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        </table>
+        {/* 登録確認 */}
+        <label className='input_check fade_in'>
+          <input
+            type='checkbox'
+            onChange={e => setSignupCheck(e.target.checked)}
+          />
+          <span className='link' onClick={e => { e.preventDefault(); setIsModal(true)}}>ご利用規約・注意事項</span>に同意する
+        </label>
+
+        <div className="btns btns_pur fade_in">
+          <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
+          <button className='btn_driv' onClick={handleSignup} disabled={!signupCheck || signing}>
+            {signing ? '決済中．．．' : '登録'}
+          </button>
+        </div>
+
+        {/* 登録確認モーダル */}
+        {isModal && (
+          <CheckModal onClose={() => setIsModal(false)} />
+        )}
       </div>
-
-      {/* 登録確認 */}
-      <label className='input_check'>
-        <input
-          type='checkbox'
-          onChange={e => setSignupCheck(e.target.checked)}
-        />
-        <span className='link' onClick={e => { e.preventDefault(); setIsModal(true)}}>ご利用規約・注意事項</span>に同意する
-      </label>
-
-      <div className="btns btns_pur">
-        <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
-        <button className='btn_driv' onClick={handleSignup} disabled={!signupCheck || signing}>
-          {signing ? '決済中．．．' : '登録'}
-        </button>
-      </div>
-
-      {/* 登録確認モーダル */}
-      {isModal && (
-        <CheckModal onClose={() => setIsModal(false)} />
-      )}
-
-    </div>
+    </section>
   )
 }
 

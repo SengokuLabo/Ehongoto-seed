@@ -3,11 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import BookCanvas from '../components/BookCanvas'
 import { mockData } from '../mock'
 import { couponUse } from '../api/client'
+import { useFadeIn } from '../hooks/useFadeIn'
 
 const mock = import.meta.env.DEV ? mockData : null
 
 // 画像選択フォーム
-export default function ImageSelect() {
+export default function Image() {
   const navigate = useNavigate()
   const location = useLocation()
   const { result, face } = location.state || {}
@@ -80,7 +81,7 @@ export default function ImageSelect() {
     }
   }
 
-  // FaceSelect or Questionへ戻る
+  // Face or Questionへ戻る
   const handlePre = () => {
     if (isFace) {
       // 顔パーツありテーマ
@@ -91,37 +92,42 @@ export default function ImageSelect() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='imgsel_root'>
-      <h2 className='imgsel_head'>{isCover ? '表紙を選んでください' : 'イラストを選んでください'}</h2>
-      <h3>{step > 0 ? `見開き：${step} / ${maxStep} ページ目` : '表紙'}</h3>
+    <section className='imgsel_root'>
+      <div className='section_cont'>
+        <h2 className='imgsel_head fade_in'>{isCover ? '表紙を選んでください' : 'イラストを選んでください'}</h2>
+        <h3 className='fade_in'>{step > 0 ? `見開き：${step} / ${maxStep} ページ目` : '表紙'}</h3>
 
-      {/* プレビュー */}
-      <div className='book_outer'>
-        <BookCanvas spread={spreads[step]} face={face} faceParts={faceParts} isPreview={!isCover && !lkToken} w={W} />
-        {!isCover &&  <div className='book_spine' />}
-      </div>
-      <div className='book_dots'>
-        {spreads.slice(0, -1).map((sp, idx) => (
-          <span key={idx} className={idx === step ? 'dot_on' : 'dot_off'} />
-        ))}
-      </div>
+        {/* プレビュー */}
+        <div className='book_outer fade_in'>
+          <BookCanvas spread={spreads[step]} face={face} faceParts={faceParts} isPreview={!isCover && !lkToken} w={W} />
+          {!isCover &&  <div className='book_spine' />}
+        </div>
+        <div className='book_dots fade_in'>
+          {spreads.slice(0, -1).map((sp, idx) => (
+            <span key={idx} className={idx === step ? 'dot_on' : 'dot_off'} />
+          ))}
+        </div>
 
-      <div className='btns'>
-        <button className='btn_pre' onClick={() => shiftImg(-1)}>←</button>
-        <span>画像切替</span>
-        <button className='btn_nxt' onClick={() => shiftImg(+1)}>→</button>
-      </div>
+        <div className='btns fade_in'>
+          <button className='btn_pre' onClick={() => shiftImg(-1)}>←</button>
+          <span>画像切替</span>
+          <button className='btn_nxt' onClick={() => shiftImg(+1)}>→</button>
+        </div>
 
-      <div className='btns'>
-        <button className='btn_back' onClick={() => setStep(step - 1)} disabled={step === 0}>前の見開き</button>
-        <button className='btn_driv' onClick={() => goToStep(step + 1)} disabled={step === maxStep}>次の見開き</button>
-      </div>
+        <div className='btns fade_in'>
+          <button className='btn_back' onClick={() => setStep(step - 1)} disabled={step === 0}>前の見開き</button>
+          <button className='btn_driv' onClick={() => goToStep(step + 1)} disabled={step === maxStep}>次の見開き</button>
+        </div>
 
-      <div className='btns btns_trans'>
-        <button className='btn_back' onClick={handlePre}>戻る</button>
-        <button className='btn_driv' onClick={handleNext} disabled={!isAllOk}>進む</button>
+        <div className='btns btns_trans fade_in'>
+          <button className='btn_back' onClick={handlePre}>戻る</button>
+          <button className='btn_driv' onClick={handleNext} disabled={!isAllOk}>進む</button>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

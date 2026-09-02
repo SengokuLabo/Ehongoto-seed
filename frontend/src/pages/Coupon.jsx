@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { couponCheck, couponUse } from "../api/client"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // クーポン入力フォーム
 export default function Coupon() {
@@ -36,69 +37,73 @@ export default function Coupon() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='coupon'>
-      <h2>クーポン入力フォーム</h2>
+    <section className='coupon'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クーポン入力フォーム</h2>
 
-      {/* 入力クーポンが無効だった場合 */}
-      {resErr === 410 && (
-        <p>
-          入力されたクーポンコードは有効期限が切れています。<br />
-          クライアントにご確認ください。
-        </p>
-      )}
-      {resErr === 409 && (
-        <p>
-          入力されたクーポンコードは定員に達しています。<br />
-          クライアントにご確認ください。
-        </p>
-      )}
-      {resErr && resErr !== 410 && resErr !== 409 && (
-        <p>
-          入力されたクーポンコードは使用できません。<br />
-          コードを確認し、再実行をお願いします。<br />
-          それでもダメな場合は、クライアントにご確認ください。
-        </p>
-      )}
+        {/* 入力クーポンが無効だった場合 */}
+        {resErr === 410 && (
+          <p>
+            入力されたクーポンコードは有効期限が切れています。<br />
+            クライアントにご確認ください。
+          </p>
+        )}
+        {resErr === 409 && (
+          <p>
+            入力されたクーポンコードは定員に達しています。<br />
+            クライアントにご確認ください。
+          </p>
+        )}
+        {resErr && resErr !== 410 && resErr !== 409 && (
+          <p>
+            入力されたクーポンコードは使用できません。<br />
+            コードを確認し、再実行をお願いします。<br />
+            それでもダメな場合は、クライアントにご確認ください。
+          </p>
+        )}
 
-      <div className='contact_user'>
-        <label>クーポンコード
-          <input
-            type='text'
-            placeholder='EHG****'
-            onChange={e => setCode(e.target.value)}
-            />
-        </label>
-        <label>名前
-          <div className='input_name'>
+        <div className='contact_user'>
+          <label className='fade_in'>クーポンコード
             <input
               type='text'
-              autoComplete='family-name'
-              placeholder='姓'
-              onChange={e => setFName(e.target.value)}
+              placeholder='EHG****'
+              onChange={e => setCode(e.target.value)}
               />
+          </label>
+          <label className='fade_in'>名前
+            <div className='input_name'>
+              <input
+                type='text'
+                autoComplete='family-name'
+                placeholder='姓'
+                onChange={e => setFName(e.target.value)}
+                />
+              <input
+                type='text'
+                autoComplete='given-name'
+                placeholder='名'
+                onChange={e => setEName(e.target.value)}
+              />
+            </div>
+          </label>
+          <label className='fade_in'>メール
             <input
-              type='text'
-              autoComplete='given-name'
-              placeholder='名'
-              onChange={e => setEName(e.target.value)}
-            />
-          </div>
-        </label>
-        <label>メール
-          <input
-            type='email'
-            placeholder='example@mail.com'
-            onChange={e => setEmail(e.target.value)}
-            />
-        </label>
-      </div>
+              type='email'
+              placeholder='example@mail.com'
+              onChange={e => setEmail(e.target.value)}
+              />
+          </label>
+        </div>
 
-      <div className='btns'>
-        <div></div>
-        <button className='btn_driv' onClick={handleNext} disabled={!isOK}>送信</button>
+        <div className='btns fade_in'>
+          <div></div>
+          <button className='btn_driv' onClick={handleNext} disabled={!isOK}>送信</button>
+        </div>
       </div>
-
-    </div>
+    </section>
   )
 }

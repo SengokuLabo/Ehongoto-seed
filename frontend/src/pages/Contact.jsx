@@ -6,11 +6,13 @@ export default function Contact() {
   const navigate = useNavigate()
 
   return (
-    <div className="contact">
-      <ContactForm
-        isModal={false}
-        onClose={() => null}
-      />
-    </div>
+    <section className="contact">
+      <div className='section_cont'>
+        <ContactForm
+          isModal={false}
+          onClose={() => null}
+        />
+      </div>
+    </section>
   )
 }

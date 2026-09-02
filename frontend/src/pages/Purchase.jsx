@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { payment } from "../api/client";
+import { payment } from '../api/client';
 import { mockData } from '../mock';
+import { useFadeIn } from '../hooks/useFadeIn';
 
 const mock = import.meta.env.DEV ? mockData : null
 
@@ -66,112 +67,118 @@ export default function Purchase() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className="purchase">
-      <h2>絵本を注文</h2>
+    <section className='purchase'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>絵本を注文</h2>
 
-      {/* 購入タイプ */}
-      <div className="pur_type">
-        <label>
-          <input type='radio' name='type' onChange={() => setType('pdf')} checked={type==='pdf'} />
-          PDF
-        </label>
-        <label>
-          <input type='radio' name='type' onChange={() => setType('soft')} checked={type==='soft'} />
-          製本(小冊子)
-        </label>
-        <label hidden={true}>
-          <input type='radio' name='type' onChange={() => setType('hard')} checked={type==='hard'} />
-          製本(ハードカバー)
-        </label>
-      </div>
-      <h4 className='pur_price'><strong>{ price?.toLocaleString('ja-JP') }</strong> 円(税込)</h4>
+        {/* 購入タイプ */}
+        <div className='pur_type fade_in'>
+          <label>
+            <input type='radio' name='type' onChange={() => setType('pdf')} checked={type==='pdf'} />
+            PDF
+          </label>
+          <label>
+            <input type='radio' name='type' onChange={() => setType('soft')} checked={type==='soft'} />
+            製本(小冊子)
+          </label>
+          <label>
+            <input type='radio' name='type' onChange={() => setType('hard')} checked={type==='hard'} />
+            製本(ハードカバー)
+          </label>
+        </div>
 
-      {/* 購入者情報 */}
-      <div className="pur_buyer">
-        <label>名前
-          <div className="input_name">
-            <input
-              type='text'
-              placeholder='絵本'
-              autoComplete='family-name'
-              onChange={e => setFName(e.target.value)}
+        {/* 金額 */}
+        <h4 className='pur_price fade_in'><strong>{ price?.toLocaleString('ja-JP') }</strong> 円(税込)</h4>
+
+        {/* 購入者情報 */}
+        <div className='pur_buyer'>
+          <label className='fade_in'>名前
+            <div className='input_name'>
+              <input
+                type='text'
+                placeholder='絵本'
+                autoComplete='family-name'
+                onChange={e => setFName(e.target.value)}
+                />
+              <input
+                type='text'
+                autoComplete='given-name'
+                placeholder='花子'
+                onChange={e => setEName(e.target.value)}
               />
+            </div>
+          </label>
+          <label className='fade_in'>メール
+            <input
+              type='email'
+              placeholder='example@mail.com'
+              onChange={e => setEmail(e.target.value)}
+              />
+          </label>
+          <label className='fade_in'>電話番号
+            <input
+              type='tel'
+              placeholder={type === 'pdf' ? '-' : '09012345678'}
+              onChange={e => setPhone(toHalf(e.target.value))}
+              disabled={type==='pdf'}
+            />
+          </label>
+          <label className='fade_in'>郵便番号
             <input
               type='text'
-              autoComplete='given-name'
-              placeholder='花子'
-              onChange={e => setEName(e.target.value)}
+              placeholder={type === 'pdf' ? '-' : '1234567'}
+              onChange={e => setPost(toHalf(e.target.value))}
+              disabled={type==='pdf'}
             />
-          </div>
-        </label>
-        <label>メール
-          <input
-            type='email'
-            placeholder='example@mail.com'
-            onChange={e => setEmail(e.target.value)}
+          </label>
+          <label className='fade_in'>住所
+            <input
+              type='text'
+              placeholder={type === 'pdf' ? '-' : '東京都渋谷区〇〇1-2-3'}
+              onChange={e => setAddress(e.target.value)}
+              disabled={type==='pdf'}
             />
-        </label>
-        <label>電話番号
+          </label>
+        </div>
+
+        {/* 購入確認 */}
+        <label className='input_check fade_in'>
           <input
-            type='tel'
-            placeholder={type === 'pdf' ? '-' : '09012345678'}
-            onChange={e => setPhone(toHalf(e.target.value))}
-            disabled={type==='pdf'}
+            type='checkbox'
+            onChange={e => setPayCheck(e.target.checked)}
           />
+          <span className='link' onClick={e => { e.preventDefault(); setIsModal(true)}}>購入確認</span>に同意する
         </label>
-        <label>郵便番号
+
+        <div className='btns btns_pur fade_in'>
+          <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
+          <button className='btn_driv' onClick={handlePayment} disabled={!canPayment || paying}>
+            {paying ? '決済中．．．' : '購入'}
+          </button>
+        </div>
+
+        {/* キャンペーンメール */}
+        <label className='input_check fade_in'>
           <input
-            type='text'
-            placeholder={type === 'pdf' ? '-' : '1234567'}
-            onChange={e => setPost(toHalf(e.target.value))}
-            disabled={type==='pdf'}
+            type='checkbox'
+            onChange={e => setMailOk(e.target.checked)}
           />
+          キャンペーン情報をメールで受け取る
         </label>
-        <label>住所
-          <input
-            type='text'
-            placeholder={type === 'pdf' ? '-' : '東京都渋谷区〇〇1-2-3'}
-            onChange={e => setAddress(e.target.value)}
-            disabled={type==='pdf'}
-          />
-        </label>
+
+        {/* エラー表示 */}
+        {error && <p className='error'>{error}</p>}
+
+        {/* 購入確認モーダル */}
+        {isModal && (
+          <CheckModal onClose={() => setIsModal(false)} />
+        )}
       </div>
-
-      {/* 購入確認 */}
-      <label className='input_check'>
-        <input
-          type='checkbox'
-          onChange={e => setPayCheck(e.target.checked)}
-        />
-        <span className='link' onClick={e => { e.preventDefault(); setIsModal(true)}}>購入確認</span>に同意する
-      </label>
-
-      <div className="btns btns_pur">
-        <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
-        <button className='btn_driv' onClick={handlePayment} disabled={!canPayment || paying}>
-          {paying ? '決済中．．．' : '購入'}
-        </button>
-      </div>
-
-      {/* キャンペーンメール */}
-      <label className='input_check'>
-        <input
-          type='checkbox'
-          onChange={e => setMailOk(e.target.checked)}
-        />
-        キャンペーン情報をメールで受け取る
-      </label>
-
-      {/* エラー表示 */}
-      {error && <p className='error'>{error}</p>}
-
-      {/* 購入確認モーダル */}
-      {isModal && (
-        <CheckModal onClose={() => setIsModal(false)} />
-      )}
-
-    </div>
+    </section>
   )
 }
 
@@ -181,15 +188,15 @@ function CheckModal({ onClose }) {
     <div
       className='modal_bk'
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="購入確認"
+      role='dialog'
+      aria-modal='true'
+      aria-label='購入確認'
     >
       <div className='modal modal_purchase' onClick={(e) => e.stopPropagation()}>
-        <button className="modal_close" onClick={onClose} aria-label="閉じる">✖︎</button>
+        <button className='modal_close' onClick={onClose} aria-label='閉じる'>✖︎</button>
         <h3>購入確認</h3>
 
-        <div className="check_thumb">
+        <div className='check_thumb'>
           <ul>
             <li>注文確定後のキャンセル・内容変更は、不可となります</li>
           </ul>

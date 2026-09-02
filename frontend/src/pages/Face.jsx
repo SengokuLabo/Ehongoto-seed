@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { drawFace } from '../utils/drawFace'
 import { mockData } from '../mock'
+import { useFadeIn } from '../hooks/useFadeIn'
 
 const mock = import.meta.env.DEV ? mockData : null
 
@@ -13,7 +14,7 @@ const TABS = [
 ]
 
 // 顔パーツ選択フォーム
-export default function FaceSelect() {
+export default function Face() {
   const navigate = useNavigate()
   const location = useLocation()
   const { result } = location.state || {}
@@ -71,44 +72,49 @@ export default function FaceSelect() {
     setFace(prev => ({...prev, [type + 'Color']: list[nextIdx].color}))
   }
 
-  // ImageSelectへ遷移
+  // Imageへ遷移
   const handleNext = () => {
     navigate('/image', { state: { ...location.state, face, lkToken } })
   }
 
-  // QuestionFormへ戻る
+  // Questionへ戻る
   const handlePre = () => {
     navigate('/' + (location.state?.search ?? ''), { state: { ...location.state, face, lkToken } })
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='facesel'>
-      <h2>顔パーツを選んでください</h2>
+    <section className='facesel'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>顔パーツを選んでください</h2>
 
-      {/* 顔プレビュー */}
-      <div className='facesel_preview'>
-        <canvas ref={previewRef} width={300} height={300} />
-      </div>
+        {/* 顔プレビュー */}
+        <div className='facesel_preview fade_in'>
+          <canvas ref={previewRef} width={300} height={300} />
+        </div>
 
-      {/* パーツ切り替えボタン */}
-      <h3>パーツ選択</h3>
-      <div className='btns btns_parts'>
-        {TABS.map(({ key, label }) => (
-          <button className={`btn_${key}`} key={key} onClick={() => shiftPart(key)}>{label}</button>
-        ))}
-      </div>
+        {/* パーツ切り替えボタン */}
+        <h3 className='fade_in'>パーツ選択</h3>
+        <div className='btns btns_parts fade_in'>
+          {TABS.map(({ key, label }) => (
+            <button className={`btn_${key}`} key={key} onClick={() => shiftPart(key)}>{label}</button>
+          ))}
+        </div>
 
-      {/* 色切り替えボタン */}
-      <h3>色選択</h3>
-      <div className='btns btns_color'>
-        <button className='btn_color_h' onClick={() => shiftColor('hair')}>髪色</button>
-        <button className='btn_color_s' onClick={() => shiftColor('skin')}>肌色</button>
-      </div>
+        {/* 色切り替えボタン */}
+        <h3 className='fade_in'>色選択</h3>
+        <div className='btns btns_color fade_in'>
+          <button className='btn_color_h' onClick={() => shiftColor('hair')}>髪色</button>
+          <button className='btn_color_s' onClick={() => shiftColor('skin')}>肌色</button>
+        </div>
 
-      <div className='btns_trans'>
-        <button className='btn_back' onClick={handlePre}>戻る</button>
-        <button className='btn_driv' onClick={handleNext}>次へ</button>
+        <div className='btns_trans fade_in'>
+          <button className='btn_back' onClick={handlePre}>戻る</button>
+          <button className='btn_driv' onClick={handleNext}>次へ</button>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

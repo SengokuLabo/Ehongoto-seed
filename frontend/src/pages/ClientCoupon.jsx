@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { clientCoupon } from '../api/client'
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // クーポン購入フォーム
 export default function ClientCoupon() {
@@ -23,42 +24,47 @@ export default function ClientCoupon() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='client_coupon'>
-      <h2>クーポン購入</h2>
-      <h3>【 {theme} 】</h3>
-      <div className='coupon_cnt'>
-        <label>数量
-          <input type='number' min={1} onChange={(e) => setCount(Number(e.target.value))} value={count}/>
+    <section className='client_coupon'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クーポン購入</h2>
+        <h3 className='fade_in'>【 {theme} 】</h3>
+        <div className='coupon_cnt fade_in'>
+          <label>数量
+            <input type='number' min={1} onChange={(e) => setCount(Number(e.target.value))} value={count}/>
+          </label>
+          <h4>価格：{count > 0 ? (count * pdf).toLocaleString('ja-JP') : 0} 円</h4>
+        </div>
+
+        {/* 購入確認 */}
+        <label className='input_check fade_in'>
+          <input
+            type='checkbox'
+            onChange={e => setPayCheck(e.target.checked)}
+          />
+          <span className='link' onClick={e => { e.preventDefault(); setIsModal(true) }}>購入確認</span>に同意する
         </label>
-        <h4>価格：{count > 0 ? (count * pdf).toLocaleString('ja-JP') : 0} 円</h4>
+        <p className='fade_in'>※有効期限は90日間です。</p>
+
+        <div className='btns fade_in'>
+          <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
+          <button className='btn_driv' onClick={handleNext} disabled={count<=0 || !payCheck}>購入</button>
+        </div>
+
+        {/* 購入確認モーダル */}
+        {isModal && (
+          <CheckModal onClose={() => setIsModal(false)} />
+        )}
+
+        {/* 購入失敗 */}
+        {resErr && (
+          <p>購入に失敗しました。<br />再購入お願いします。</p>
+        )}
       </div>
-
-      {/* 購入確認 */}
-      <label className='input_check'>
-        <input
-          type='checkbox'
-          onChange={e => setPayCheck(e.target.checked)}
-        />
-        <span className='link' onClick={e => { e.preventDefault(); setIsModal(true) }}>購入確認</span>に同意する
-      </label>
-      <p>※有効期限は90日間です。</p>
-
-      <div className='btns'>
-        <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
-        <button className='btn_driv' onClick={handleNext} disabled={count<=0 || !payCheck}>購入</button>
-      </div>
-
-      {/* 購入確認モーダル */}
-      {isModal && (
-        <CheckModal onClose={() => setIsModal(false)} />
-      )}
-
-      {/* 購入失敗 */}
-      {resErr && (
-        <p>購入に失敗しました。<br />再購入お願いします。</p>
-      )}
-    </div>
+    </section>
   )
 }
 

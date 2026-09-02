@@ -60,6 +60,8 @@ class Client(models.Model):
   user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
   name = models.CharField(max_length=100)
   email = models.EmailField(unique=True)
+  label = models.CharField(max_length=50, blank=True, default='')
+  desc = models.TextField(blank=True, default='')
   chk_token = models.UUIDField(default=uuid.uuid4, unique=True)
   chk_exp = models.DateTimeField(blank=True, null=True)
   logo = models.CharField(max_length=255, blank=True, default='')
@@ -127,11 +129,16 @@ class Theme(models.Model):
   client = models.ForeignKey(Client, on_delete=models.PROTECT)
   name = models.CharField(max_length=50)
   year = models.SmallIntegerField(blank=True, null=True)
+  label = models.CharField(max_length=50, blank=True, default='')
+  icon = models.CharField(max_length=255, blank=True, null=True)
+  desc = models.TextField(blank=True, default='')
   prompt = models.TextField(default=SYSTEM_PROMPT)
   price_pdf = models.IntegerField(default=500)
   price_soft = models.IntegerField(default=3500)
   price_hard = models.IntegerField(default=8000)
   face_group = models.ForeignKey(FaceGroupName, on_delete=models.PROTECT, blank=True, null=True)
+  title_style = models.JSONField(blank=True, null=True)
+  is_active = models.BooleanField(default=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):
     base = f'{self.client.name} {self.name}'
@@ -301,7 +308,10 @@ class CouponDist(models.Model):
 # 回答ログ
 class AnswerLog(models.Model):
   book = models.ForeignKey(Book, on_delete=models.SET_NULL, blank=True, null=True)
+  theme = models.ForeignKey(Theme, on_delete=models.SET_NULL, blank=True, null=True)
   data = models.JSONField(blank=True, null=True)
+  sel_at = models.DateTimeField(blank=True, null=True)
+  prev_at = models.DateTimeField(blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   class Meta:
     verbose_name_plural = '90 answers'

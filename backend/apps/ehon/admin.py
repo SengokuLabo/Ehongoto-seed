@@ -106,11 +106,13 @@ class ThemeAdmin(admin.ModelAdmin):
   list_display = (
     'client_name',
     'name',
+    'label',
     'price_pdf',
     'price_soft',
     'price_hard',
     'q_count',
     'face_group',
+    'is_active',
   )
   list_filter = (
     'client',
@@ -243,7 +245,7 @@ class BookAdmin(admin.ModelAdmin):
     'book_type',
     'status',
   )
-  ordering = ('created_at', )
+  ordering = ('-created_at', )
   list_per_page = 30
   def theme_name(self, obj):
     return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''
@@ -275,6 +277,7 @@ class BookPageAdmin(admin.ModelAdmin):
 class AnswerLogAdmin(admin.ModelAdmin):
   list_display = (
     'created_at',
+    'theme',
     'book',
     'data',
   )
@@ -288,7 +291,7 @@ class PendingBookAdmin(admin.ModelAdmin):
     'data',
     'created_at',
   )
-  ordering = ('created_at',)
+  ordering = ('-created_at',)
   list_per_page = 30
 
 # クーポン
@@ -303,7 +306,7 @@ class CouponAdmin(admin.ModelAdmin):
     'created_at',
   )
   list_filter = ('theme__client', 'theme')
-  ordering = ('created_at', 'theme',)
+  ordering = ('-created_at', 'theme',)
   list_per_page = 30
   def theme_name(self, obj):
     return f"{obj.theme.client.name} {obj.theme.name}" if obj.theme else ''

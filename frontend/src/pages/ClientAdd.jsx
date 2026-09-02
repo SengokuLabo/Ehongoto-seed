@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { clientAdd } from "../api/client"
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // クライアント 仮登録フォーム
 export default function ClientAdd() {
@@ -23,79 +24,84 @@ export default function ClientAdd() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='client_add'>
-      <h2>クライアント登録</h2>
+    <section className='client_add'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クライアント登録</h2>
 
-      <div className='contact_user'>
-        <label>名前
-          <div className='input_name'>
+        <div className='contact_user'>
+          <label className='fade_in'>名前
+            <div className='input_name'>
+              <input
+                type='text'
+                autoComplete='family-name'
+                placeholder='姓'
+                onChange={e => setFName(e.target.value)}
+              />
+              <input
+                type='text'
+                autoComplete='given-name'
+                placeholder='名'
+                onChange={e => setEName(e.target.value)}
+              />
+            </div>
+          </label>
+          <label className='fade_in'>クライアント名
             <input
               type='text'
-              autoComplete='family-name'
-              placeholder='姓'
-              onChange={e => setFName(e.target.value)}
+              placeholder='ehongoto'
+              onChange={e => setClientNm(e.target.value)}
             />
+            {clientNm && !isClientNmOk && (<p className='err'>英数字で入力してください</p>)}
+          </label>
+          <label className='fade_in'>メール
             <input
-              type='text'
-              autoComplete='given-name'
-              placeholder='名'
-              onChange={e => setEName(e.target.value)}
+              type='email'
+              placeholder='example@mail.com'
+              onChange={e => setEmail(e.target.value)}
             />
-          </div>
-        </label>
-        <label>クライアント名
-          <input
-            type='text'
-            placeholder='ehongoto'
-            onChange={e => setClientNm(e.target.value)}
-          />
-          {clientNm && !isClientNmOk && (<p className='err'>英数字で入力してください</p>)}
-        </label>
-        <label>メール
-          <input
-            type='email'
-            placeholder='example@mail.com'
-            onChange={e => setEmail(e.target.value)}
-          />
-        </label>
-        <label>パスワード
-          <input
-            type='password'
-            placeholder='8文字以上'
-            onChange={e => setPass(e.target.value)}
-          />
-          {pass && pass.length < 8 && (<p className='err'>パスワードは8文字以上で入力してください</p>)}
-        </label>
-        <label>パスワード確認
-          <input
-            type='password'
-            placeholder='パスワードを再入力'
-            onChange={e => setPass2(e.target.value)}
-          />
-          {pass2 && pass !== pass2 && (<p className='err'>パスワードと同値を入力してください</p>)}
-        </label>
+          </label>
+          <label className='fade_in'>パスワード
+            <input
+              type='password'
+              placeholder='8文字以上'
+              onChange={e => setPass(e.target.value)}
+            />
+            {pass && pass.length < 8 && (<p className='err'>パスワードは8文字以上で入力してください</p>)}
+          </label>
+          <label className='fade_in'>パスワード確認
+            <input
+              type='password'
+              placeholder='パスワードを再入力'
+              onChange={e => setPass2(e.target.value)}
+            />
+            {pass2 && pass !== pass2 && (<p className='err'>パスワードと同値を入力してください</p>)}
+          </label>
+        </div>
+
+        {resErr === 400 && (
+          <p>
+            登録失敗しました。<br />
+            再実行をお願いします。
+          </p>
+        )}
+        {resErr === 409 && (
+          <p>
+            すでに登録済みです。
+          </p>
+        )}
+
+        <div className='btns fade_in'>
+          <div></div>
+          <button className='btn_driv' onClick={handleNext} disabled={!isOK}>登録</button>
+        </div>
+
+        {addOk && (<AddModal onClose={() => setAddOk(false)} />)}
       </div>
-
-      {resErr === 400 && (
-        <p>
-          登録失敗しました。<br />
-          再実行をお願いします。
-        </p>
-      )}
-      {resErr === 409 && (
-        <p>
-          すでに登録済みです。
-        </p>
-      )}
-
-      <div className='btns'>
-        <div></div>
-        <button className='btn_driv' onClick={handleNext} disabled={!isOK}>登録</button>
-      </div>
-
-      {addOk && (<AddModal onClose={() => setAddOk(false)} />)}
-    </div>
+    </section>
   )
 }
 

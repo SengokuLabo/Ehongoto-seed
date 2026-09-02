@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation, useSearchParams, useNavigate } from 'react-router-dom'
-import QuestionForm from './pages/QuestionForm'
-import ImageSelect from './pages/ImageSelect'
-import FaceSelect from './pages/FaceSelect'
+import Home from './pages/Home'
+import Question from './pages/Question'
+import Image from './pages/Image'
+import Face from './pages/Face'
 import Preview from './pages/Preview'
 import Purchase from './pages/Purchase'
 import Contact from './pages/Contact'
@@ -30,9 +31,9 @@ export default function App() {
           {/* テーマ一覧 or 質問回答 */}
           <Route path='/' element={<TopPage />} />
           {/* 顔パーツ選択 */}
-          <Route path='/face' element={<FaceSelect />} />
+          <Route path='/face' element={<Face />} />
           {/* 画像選択 */}
-          <Route path='/image' element={<ImageSelect />} />
+          <Route path='/image' element={<Image />} />
           {/* 絵本プレビュー・SNSシェア */}
           <Route path='/preview' element={<Preview />} />
           {/* 購入選択 */}
@@ -72,8 +73,14 @@ export default function App() {
 // ホーム画面分岐処理
 function TopPage() {
   const [searchParams] = useSearchParams()
+  const client = searchParams.get('client')
   const theme = searchParams.get('theme')
-  return theme ? <QuestionForm /> : <Themes />
+  // パラメータなし        → Home
+  // クライアントのみ      → Themes
+  // クライアント + テーマ → Question
+  return theme ? <Question />
+    : client ? <Themes />
+      : <Home />
 }
 
 // ページトップにスクローク
@@ -92,17 +99,11 @@ function Header() {
   const [searchParams] = useSearchParams()
   const [isContact, setIsContact] = useState(false)
   const [isDialog, setIsDialog] = useState(false)
-  const [home, setHome] = useState('/')
+  const params = searchParams.toString()
 
-  // パラメータ取得
-  useEffect(() => {
-    const params = searchParams.toString()
-    setHome(params ? `/?${params}` : '/')
-  }, [])
   let idx = -1
-
-  if (location.pathname == '/') {
-    // 質問
+  if (location.pathname == '/' && params)  {
+    // 質問 or テーマ一覧
     idx = 1
   } else if (location.pathname == '/face') {
     // 顔パーツ選択
@@ -122,9 +123,9 @@ function Header() {
 
   return (
     <div className='header'>
-      <button onClick={() => setIsDialog(true)}>
+      <button onClick={() => {idx > 0 ? setIsDialog(true): navigate('/')}}>
         <div className='header_icon'>
-          <img src='/media/EhongotoSeed.png' alt='EhongotoSeed' />
+          <img src='/media/logos/EhongotoSeed.png' alt='EhongotoSeed' />
         </div>
       </button>
         <h4>えほんごとのたね</h4>
@@ -138,7 +139,16 @@ function Header() {
         </ol>
       }
 
-      <button className='btn_contact' onClick={() => setIsContact(true)}>お問い合わせ</button>
+      <div className='btns_head'>
+        {idx < 1 &&
+          <button className='btn_login' onClick={() => navigate('/client/login')}>
+            <img src='/media/logos/icon_login.png' alt='クライアント ログイン' />
+          </button>
+        }
+        <button className='btn_contact' onClick={() => setIsContact(true)}>
+          <img src='/media/logos/icon_mail.png' alt='お問い合わせ' />
+        </button>
+      </div>
 
       {/* 問い合わせモーダル */}
       {isContact &&
@@ -149,9 +159,9 @@ function Header() {
       }
 
       {/* ホームへ戻る際のダイアログ */}
-      {isDialog && location.pathname != '/' &&
+      {isDialog &&
         <HomeDialog
-          onOk={() => { setIsDialog(false); navigate(home) }}
+          onOk={() => { setIsDialog(false); navigate('/') }}
           onCancel={() => setIsDialog(false)}
         />
       }
@@ -167,13 +177,27 @@ function Footer() {
   const [searchParams] = useSearchParams()
   const [isContact, setIsContact] = useState(false)
   const [isDialog, setIsDialog] = useState(false)
-  const [home, setHome] = useState('/')
+  const params = searchParams.toString()
 
-  // パラメータ取得
-  useEffect(() => {
-    const params = searchParams.toString()
-    setHome(params ? `/?${params}` : '/')
-  }, [])
+  let idx = -1
+  if (location.pathname == '/' && params)  {
+    // 質問 or テーマ一覧
+    idx = 1
+  } else if (location.pathname == '/face') {
+    // 顔パーツ選択
+    idx = 2
+  } else if (location.pathname == '/image') {
+    // 画像選択
+    idx = 3
+  } else if (location.pathname == '/preview') {
+    // プレビュー
+    idx = 4
+  } else if (location.pathname == '/purchase') {
+    // 注文
+    idx = 5
+  } else {
+    idx = -1
+  }
 
   return (
     <>
@@ -182,7 +206,7 @@ function Footer() {
         <h4>もっと深く、伝えたい想いへ</h4>
         <p>あなたの想いをじっくり伺い<br />物語も絵も、世界にひとつの一冊をつくります</p>
         <a href='https://www.ehongoto.jp' target='_blank' rel='noreferror'>
-          <img src='/media/EHONGOTO.png' alt='EHONGOTO' />
+          <img src='/media/logos/EHONGOTO.png' alt='EHONGOTO' />
         </a>
       </div>
 
@@ -190,11 +214,11 @@ function Footer() {
       <div className='footer'>
         <ul>
           <li>
-            <button className='btn_home' onClick={() => setIsDialog(true)}
+            <button className='btn_home' onClick={() => {idx > 0 ? setIsDialog(true) : navigate('/')}}
               style={{cursor: location.pathname == '/' ? 'default' : 'pointer'}}
             >
               <div className='footer_icon'>
-                <img src='/media/EhongotoSeed.png' alt='EhongotoSeed' />
+                <img src='/media/logos/EhongotoSeed.png' alt='EhongotoSeed' />
               </div>
               <h4>えほんごとのたね</h4>
               <p>ホーム</p>
@@ -219,9 +243,9 @@ function Footer() {
         }
 
         {/* ホームへ戻る際のダイアログ */}
-        {isDialog && location.pathname != '/' &&
+        {isDialog &&
           <HomeDialog
-            onOk={() => { setIsDialog(false); navigate(home) }}
+            onOk={() => { setIsDialog(false); navigate('/') }}
             onCancel={() => setIsDialog(false)}
           />
         }

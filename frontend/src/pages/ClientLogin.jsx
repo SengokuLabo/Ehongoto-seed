@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { clientLogin } from "../api/client"
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // ログインフォーム
 export default function ClientLogin() {
@@ -19,36 +20,41 @@ export default function ClientLogin() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn()
+
   return (
-    <div className='client_login'>
-      <h2>クライアント ログイン</h2>
-      <div className='contact_user'>
-        <label>メール
-          <input
-            type='email'
-            placeholder='example@mail.com'
-            onChange={e => setEmail(e.target.value)}
-          />
-        </label>
-        <label>パスワード
-          <input
-            type='password'
-            placeholder='8文字以上'
-            onChange={e => setPass(e.target.value)}
-          />
-        </label>
-      </div>
+    <section className='client_login'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クライアント ログイン</h2>
+        <div className='contact_user'>
+          <label className='fade_in'>メール
+            <input
+              type='email'
+              placeholder='example@mail.com'
+              onChange={e => setEmail(e.target.value)}
+            />
+          </label>
+          <label className='fade_in'>パスワード
+            <input
+              type='password'
+              placeholder='8文字以上'
+              onChange={e => setPass(e.target.value)}
+            />
+          </label>
+        </div>
 
-      {resErr && (
-        <p>
-          ログインに失敗しました。
-        </p>
-      )}
+        {resErr && (
+          <p>
+            ログインに失敗しました。
+          </p>
+        )}
 
-      <div className='btns'>
-        <button className='btn_pre' onClick={() => navigate('/client/add')}>新規登録</button>
-        <button className='btn_driv' onClick={handleNext} disabled={!isOK}>ログイン</button>
+        <div className='btns fade_in'>
+          <button className='btn_pre' onClick={() => navigate('/client/add')}>新規登録</button>
+          <button className='btn_driv' onClick={handleNext} disabled={!isOK}>ログイン</button>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

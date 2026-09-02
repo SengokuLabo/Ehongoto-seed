@@ -2,6 +2,7 @@ from django.urls import path
 from . import views, views_coupon, views_client, views_pay
 
 urlpatterns = [
+  path('home', views.get_home, name='ホーム情報'),
   path('questions', views.get_question, name='質問取得'),
   path('generate', views.generate, name='物語作成'),
   path('ehon/<uuid:token>', views.ehon_data, name='絵本データ取得'),

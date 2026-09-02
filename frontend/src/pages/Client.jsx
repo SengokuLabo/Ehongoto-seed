@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { clientThemes, couponDist, subscCancel, subscPortal } from "../api/client"
 import { useNavigate } from "react-router-dom"
 import Modal from '../components/Modal'
+import { useFadeIn } from '../hooks/useFadeIn'
 
 // クライアント ダッシュボード
 export default function Client() {
@@ -89,145 +90,150 @@ export default function Client() {
     }
   }
 
+  // フェードインアニメーション
+  useFadeIn(client)
+
   return (
-    <div className='client'>
-      <h2>クライアント ダッシュボード</h2>
-      <div className='client_head'>
-        <h3><small>クライアント名:</small> {client}</h3>
-        {!isFree &&
-          <button className='btn_pre' onClick={() => setIsCancel(true)}>解約</button>
-        }
-      </div>
-      {/* 解約処理結果 */}
-      {resCancel && <p className='cancel_err'>{resCancel}</p>}
-      {isFree && <p>- サブスク不要アカウント</p>}
-
-      {/* サブスク情報 */}
-      {subsc &&
-        <div className='subsc_info'>
-          <table>
-            <thead>
-              <tr><td>ステータス</td><td>プラン</td><td>登録日</td></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{subsc.status}</td>
-                <td>{subsc.plan}</td>
-                <td>{new Date(subsc.start_at).toLocaleDateString('ja-JP')}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className='btns'>
-            <div></div>
-            <button className='btn_driv' onClick={handlePortal}>サブスク情報を確認</button>
-          </div>
+    <section className='client'>
+      <div className='section_cont'>
+        <h2 className='fade_in'>クライアント ダッシュボード</h2>
+        <div className='client_head'>
+          <h3 className='fade_in'><small>クライアント名:</small> {client}</h3>
+          {!isFree &&
+            <button className='btn_pre fade_in' onClick={() => setIsCancel(true)}>解約</button>
+          }
         </div>
-      }
+        {/* 解約処理結果 */}
+        {resCancel && <p className='cancel_err'>{resCancel}</p>}
+        {isFree && <p className='fade_in'>- サブスク不要アカウント</p>}
 
-      {/* クーポン */}
-      {maxCnt > 0 &&
-        <div className='coupon_dist'>
-          <div className='client_head'>
-            <div>
-              <h3>クーポン配分設定</h3>
-              <p>- 毎月更新のタイミングで配布されます</p>
-            </div>
-            <p>{totalCnt} / {maxCnt} 枚</p>
-            <button className='btn_nxt' onClick={handleDistSave} disabled={totalCnt!=maxCnt}>分配確定</button>
-          </div>
-
-          <table>
-            <thead>
-              <tr><td>テーマ</td><td>枚数</td></tr>
-            </thead>
-            <tbody>
-              {themes.map(t => (
-                <tr key={t.id}>
-                  <td>{t.name}</td>
-                  <td>
-                    <input type='number' placeholder={t.coupon_cnt} min={0} value={dist[t.name]}
-                      onChange={(e) => handleDistChange(t.name, Number(e.target.value))} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      }
-
-      {/* テーマ情報 */}
-      {themes.map((t, i) => (
-        <div key={t.id} className='theme_list'>
-          <div className='client_head'>
-            <h3><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
-
-            <div className='theme_head_price'>
-              <p>PDF価格：{t.pdf} 円</p>
-              <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
-                クーポン購入
-              </button>
-            </div>
-          </div>
-
-          {t.coupons.length > 0 && (
-            <table className='coupons'>
+        {/* サブスク情報 */}
+        {subsc &&
+          <div className='subsc_info fade_in'>
+            <table>
               <thead>
-                <tr><td>コード</td><td>残数</td><td>有効期限</td></tr>
+                <tr><td>ステータス</td><td>プラン</td><td>登録日</td></tr>
               </thead>
               <tbody>
-                {t.coupons.map((c, i) => (
-                  <tr key={c.code} className={
-                    c.rest_cnt === 0 ||
-                    (c.valid_until && new Date(c.valid_until).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0))
-                    ? 'coupon_ng' : ''
-                  }>
-                    <td>{c.code}</td>
-                    <td>{c.rest_cnt}/{c.max_uses}</td>
-                    <td>{c.valid_until ? new Date(c.valid_until).toLocaleDateString('ja-JP') : '期限なし'}</td>
+                <tr>
+                  <td>{subsc.status}</td>
+                  <td>{subsc.plan}</td>
+                  <td>{new Date(subsc.start_at).toLocaleDateString('ja-JP')}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className='btns'>
+              <div></div>
+              <button className='btn_driv' onClick={handlePortal}>サブスク情報を確認</button>
+            </div>
+          </div>
+        }
+
+        {/* クーポン */}
+        {maxCnt > 0 &&
+          <div className='coupon_dist'>
+            <div className='client_head fade_in'>
+              <div>
+                <h3>クーポン配分設定</h3>
+                <p>- 毎月更新のタイミングで配布されます</p>
+              </div>
+              <p>{totalCnt} / {maxCnt} 枚</p>
+              <button className='btn_nxt fade_in' onClick={handleDistSave} disabled={totalCnt!=maxCnt}>分配確定</button>
+            </div>
+
+            <table className='fade_in'>
+              <thead>
+                <tr><td>テーマ</td><td>枚数</td></tr>
+              </thead>
+              <tbody>
+                {themes.map(t => (
+                  <tr key={t.id}>
+                    <td>{t.name}</td>
+                    <td>
+                      <input type='number' placeholder={t.coupon_cnt} min={0} value={dist[t.name]}
+                        onChange={(e) => handleDistChange(t.name, Number(e.target.value))} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-          {t.coupons.length === 0 && (
-            <p>クーポンはまだありません</p>
-          )}
-        </div>
-      ))}
+          </div>
+        }
 
-      {/* ログインエラー */}
-      {logErr &&
-        <Modal onClose={() => setLogErr(false)} title='ログイン失敗'
-        cont={<>
-          <p>
-            再ログインもしくは新規登録を<br />
-            お願いします
-          </p>
-          <button className='btn_back' onClick={() => navigate('/client/login')}>ログイン</button>
-        </>}
-        />}
+        {/* テーマ情報 */}
+        {themes.map((t, i) => (
+          <div key={t.id} className='theme_list'>
+            <div className='client_head fade_in'>
+              <h3><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
 
-      {/* 分配確定 */}
-      {resDist &&
-        <Modal onClose={() => setResDist(null)} title='クーポン分配確定'
-        cont={<>{resDist}</>}
-        />}
+              <div className='theme_head_price'>
+                <p>PDF価格：{t.pdf} 円</p>
+                <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
+                  クーポン購入
+                </button>
+              </div>
+            </div>
 
-      {/* 解約確認 */}
-      {isCancel &&
-        <Modal onClose={() => setIsCancel(false)} title='解約確認'
-        cont={<>
-          <ul className='modal_cancel'>
-            <li>解約すると一切のサービスがご利用できなくなります</li>
-            <li>未使用クーポンは使用できなくなります</li>
-            <li>解約後の再登録は、無料トライアルの対象外となります</li>
-          </ul>
-          <label className='input_check'>
-            <input type='checkbox' onChange={e => setIsCheck(e.target.checked)} />本当に解約しますか？
-          </label>
-          <button className='btn_back' onClick={handleCancel} disabled={!isCheck}>解約</button>
-        </>}
-        />}
-    </div>
+            {t.coupons.length > 0 && (
+              <table className='coupons fade_in'>
+                <thead>
+                  <tr><td>コード</td><td>残数</td><td>有効期限</td></tr>
+                </thead>
+                <tbody>
+                  {t.coupons.map((c, i) => (
+                    <tr key={c.code} className={
+                      c.rest_cnt === 0 ||
+                      (c.valid_until && new Date(c.valid_until).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0))
+                      ? 'coupon_ng' : ''
+                    }>
+                      <td>{c.code}</td>
+                      <td>{c.rest_cnt}/{c.max_uses}</td>
+                      <td>{c.valid_until ? new Date(c.valid_until).toLocaleDateString('ja-JP') : '期限なし'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {t.coupons.length === 0 && (
+              <p className='fade_in'>クーポンはまだありません</p>
+            )}
+          </div>
+        ))}
+
+        {/* ログインエラー */}
+        {logErr &&
+          <Modal onClose={() => setLogErr(false)} title='ログイン失敗'
+          cont={<>
+            <p>
+              再ログインもしくは新規登録を<br />
+              お願いします
+            </p>
+            <button className='btn_back' onClick={() => navigate('/client/login')}>ログイン</button>
+          </>}
+          />}
+
+        {/* 分配確定 */}
+        {resDist &&
+          <Modal onClose={() => setResDist(null)} title='クーポン分配確定'
+          cont={<>{resDist}</>}
+          />}
+
+        {/* 解約確認 */}
+        {isCancel &&
+          <Modal onClose={() => setIsCancel(false)} title='解約確認'
+          cont={<>
+            <ul className='modal_cancel'>
+              <li>解約すると一切のサービスがご利用できなくなります</li>
+              <li>未使用クーポンは使用できなくなります</li>
+              <li>解約後の再登録は、無料トライアルの対象外となります</li>
+            </ul>
+            <label className='input_check'>
+              <input type='checkbox' onChange={e => setIsCheck(e.target.checked)} />本当に解約しますか？
+            </label>
+            <button className='btn_back' onClick={handleCancel} disabled={!isCheck}>解約</button>
+          </>}
+          />}
+      </div>
+    </section>
   )
 }

@@ -11,7 +11,7 @@
   outline: none;
   background: $bg;
   color: $color;
-  box-shadow: 0 4px 0 darken($bg, 15%), 0 10px 16px rgba(0,0,0,.12);
+  box-shadow: 0 4px 0 darken($bg, 15%), 0 1rem 16px rgba(0,0,0,.12);
 
   &:not(:disabled):hover {
     filter: brightness(1.05);
@@ -38,6 +38,22 @@
 
 body {
   font-family: "Zen Maru Gothic", sans-serif;
+}
+
+// フェードイン
+.fade_in {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition: .7s ease;
+
+  &.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@for $i from 1 through 20 {
+  .delay#{$i} { transition-delay: #{$i * 0.15}s; }
 }
 
 // ボタン
@@ -80,6 +96,15 @@ button {
   }
 }
 
+.btns_head {
+  display: flex;
+  margin: 0 0 0 auto;
+
+  img {
+    width: 3rem;
+  }
+}
+
 .btns_trans {
   display: flex;
   justify-content: space-between;
@@ -93,17 +118,13 @@ button {
   margin: 3rem auto;
 }
 
+.btn_login {
+  @include btn_ehon(#A09078);
+  margin-right: 1rem;
+}
+
 .btn_contact {
   @include btn_ehon(#8FBCBC);
-
-  @media (max-width: 768px) {
-    font-size: 0;
-
-    &::after {
-      content: "✉️";
-      font-size: 2rem;
-    }
-  }
 }
 
 .btn_back {
@@ -329,6 +350,57 @@ table {
   }
 }
 
+
+// 待機モーダル
+.modal_wait {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, .8);
+
+  p {
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-shadow: 0 0 4px #fff, 0 0 4px #fff;
+  }
+
+  .spinner {
+    width: 12rem;
+    height: 12rem;
+    margin-bottom: 5rem;
+    border-radius: 50%;
+    position: relative;
+    animation: pulse-glow 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 1rem rgba(255, 255, 255, .8));
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .spinner::before {
+    content: '';
+    position: absolute;
+    top: -1rem;
+    left: -1rem;
+    right: -1rem;
+    bottom: -1rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8FBCBC, #A0C098);
+    filter: blur(20px);
+    opacity: 0.7;
+    animation: glow-pulse 2s ease-in-out infinite;
+    z-index: -1;
+  }
+}
+
 // -------------- Header --------------
 .header {
   position: fixed;
@@ -412,9 +484,9 @@ table {
   }
 }
 
+
 // -------------- Footer --------------
 .ehongoto{
-  margin-top: 8rem;
   padding: 8rem 0;
   text-align: center;
   background: rgb(83, 182, 191);
@@ -485,16 +557,15 @@ table {
 // -------------- Main --------------
 .main {
   width: 100%;
-  max-width: 80rem;
-  margin: 15rem auto 10rem auto;
+  padding-top: 15rem;
+  background: #d9d9d9;
 
   h2 {
     margin-bottom: 3rem;
   }
 
   @media (max-width: 768px) {
-    max-width: 90%;
-    margin: 10rem auto 5rem auto;
+    padding-top: 10rem;
   }
 }
 
@@ -506,13 +577,276 @@ table {
   text-align: center;
 }
 
+.section_cont {
+  max-width: 80rem;
+  margin: auto;
+  padding-bottom: 10rem;
 
-// -------------- QuestionForm --------------
+  @media (max-width: 768px) {
+    max-width: 90%;
+    padding-bottom: 5rem;
+  }
+}
+
+
+// -------------- Home --------------
+.home {
+  margin-bottom: 10rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 5rem;
+  }
+}
+
+.home_hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 100rem;
+  max-height: calc(100vh - 6rem);
+  margin: 10rem auto 20rem auto;
+  line-height: 2;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    margin: 0 auto 5rem auto;
+  }
+
+  h1 {
+    font-size: 5rem;
+    color: green;
+    margin-bottom: 3rem;
+  }
+
+  button {
+    height: auto;
+    font-size: 1.2rem;
+    border-bottom: solid 1px #333;
+  }
+
+  .book_outer {
+    margin-right: 0;
+
+    @media (max-width: 768px) {
+      margin: 3rem auto;
+    }
+  }
+}
+
+.home_steps {
+  padding-top: 10rem;
+  text-align: center;
+  background: #FFF;
+
+  @media (max-width: 768px) {
+    padding-top: 5rem;
+  }
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.step {
+  width: 25%;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+
+  .icon {
+    width: 12rem;
+    margin: auto;
+    padding: 2rem;
+    background: lightgoldenrodyellow;
+    border-radius: 50%;
+    border: solid 2px orange;
+  }
+
+  h3 {
+    line-height: 2;
+  }
+}
+
+.angle {
+  position: relative;
+
+  @media (max-width: 768px) {
+    width: 3rem;
+    height: 3rem;
+    margin: 3rem auto;
+    font-size: 0;
+
+    &::after{
+      content: '↓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+    }
+  }
+}
+
+.home_themes {
+  margin-top: 10rem;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    margin-top: 5rem;
+  }
+
+  .themes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 5rem auto;
+  }
+}
+
+.btn_theme {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: calc(25% - .75rem);
+  height: auto;
+  padding: 1rem;
+  background: #FFF8F0;
+  border-radius: 3rem;
+  border: solid 1px #8FBCBC;
+
+  @media (max-width: 768px) {
+    width: 80%;
+    margin: auto;
+  }
+
+  p {
+    font-size: 1.2rem;
+    font-weight: normal;
+  }
+}
+
+.theme_icon {
+  margin: .5rem;
+  border: solid 1px #999;
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.home_clients {
+  padding: 10rem 0;
+  background: #FFF;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 5rem 0;
+  }
+}
+
+.clients {
+  margin-top: 5rem;
+}
+
+.btn_client {
+  width: 100%;
+  height: auto;
+  margin-bottom: 3rem;
+  padding: 2rem;
+  border: solid 1px #B08860;
+  border-radius: 3rem;
+
+  .logo {
+    width: 10rem;
+    height: 10rem;
+    margin: auto;
+    border: solid 1px #7DC48A;
+    border-radius: 50%;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  p {
+    font-weight: normal;
+  }
+}
+
+.home_sample {
+  margin-top: 10rem;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    margin-top: 5rem;
+  }
+
+  p {
+    margin-bottom: 5rem;
+  }
+}
+
+.home_price {
+  padding-top: 10rem;
+  background: #FFF;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    padding-top: 5rem;
+  }
+}
+
+.prices {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.price {
+  width: 30%;
+  padding: 2rem 1rem;
+  border: solid 1px #7DC48A;
+  border-radius: 3rem;
+
+  @media (max-width: 768px) {
+    width: 90%;
+    margin: 2rem auto;
+  }
+
+  .icon {
+    width: 50%;
+    margin: auto;
+  }
+
+  p {
+    font-size: 1.2rem;
+  }
+}
+
+
+// -------------- Question --------------
 .q_lists {
   margin-bottom: 10rem;
 
   @media (max-width: 768px) {
     margin-bottom: 5rem;
+  }
+
+  .err {
+    color: red;
+    text-align: center;
   }
 }
 
@@ -576,7 +910,7 @@ table {
   }
 }
 
-// -------------- FaceSelect --------------
+// -------------- Face --------------
 .facesel {
   h3 {
     margin-top: 5rem;
@@ -606,7 +940,7 @@ table {
 }
 
 
-// -------------- ImageSelect --------------
+// -------------- Image --------------
 
 
 // -------------- Preview --------------
@@ -719,6 +1053,7 @@ table {
   display: flex;
   flex-direction: column;
   padding: 1rem 2rem;
+  background: #FFF;
   border: solid 1px #7A8A96;
   border-radius: 2rem;
 
@@ -791,51 +1126,6 @@ table {
     margin-left: 2rem;
     list-style: decimal;
   }
-}
-
-// PDF生成モーダル
-.pdf_modal {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.5);
-
-  p {
-    text-shadow: 0 0 4px #fff, 0 0 4px #fff;
-  }
-}
-
-.spinner {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 5rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8FBCBC, #A0C098);
-  position: relative;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.spinner::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8FBCBC, #A0C098);
-  filter: blur(20px);
-  opacity: 0.7;
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-.spinner_p {
-  font-weight: bold;
 }
 
 @keyframes pulse-glow {
@@ -955,6 +1245,12 @@ table {
     padding: 1rem 3rem;
   }
 }
+
+
+// -------------- Coupon --------------
+
+
+// -------------- Login --------------
 
 
 // -------------- Client --------------

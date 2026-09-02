@@ -66,6 +66,14 @@ export const getEhon = (token) =>
 export const contact = (body) =>
   request('/contact', { method: 'POST', body: JSON.stringify(body) })
 
+// 111. PATCH /api/log/{log_id} ファネル記録
+export const patchLog = (log_id) =>
+  request(`/log/${log_id}`)
+
+// 112. GET /api/home ホーム画面一括取得
+export const getHome = () =>
+  request('/home')
+
 
 // ***** クライアント向け *****
 // 201. POST /api/client/add 仮登録
