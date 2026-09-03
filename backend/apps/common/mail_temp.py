@@ -73,6 +73,7 @@ def pdf_purchase(book_obj, download_url):
 
   return text, html
 
+
 # 製本購入時
 def print_purchase(buyer_obj, book_obj, download_url):
   text = f'''
@@ -111,6 +112,7 @@ def print_purchase(buyer_obj, book_obj, download_url):
 
   return text, html
 
+
 # お問い合わせ（運営宛）
 def contact_admin(name, type_label, email, message, tel=None, num=None, company=None):
   extra = ''
@@ -134,6 +136,7 @@ def contact_admin(name, type_label, email, message, tel=None, num=None, company=
 
   return text
 
+
 # お問い合わせ自動返信（問い合わせ者宛）
 def contact_reply(name, type_label, message):
   text = f'''
@@ -150,6 +153,7 @@ def contact_reply(name, type_label, message):
   ''' + SIGNATURE_TEXT
 
   return text
+
 
 # 管理者用
 def print_admin(buyer_obj, book_obj):
@@ -207,4 +211,30 @@ def client_coupon(name, email, theme):
     テーマ：{theme}
   ''' + SIGNATURE_TEXT
 
+  return text
+
+
+# 購入通知（クライアント宛）
+def notify_client(buyer_obj, book_obj, type_label):
+  text = f'''
+    {book_obj.theme.label or book_obj.theme.name} に新しいご注文がありました。
+
+    購入者：{buyer_obj.name}
+    購入種別：{type_label}
+    購入金額：¥{book_obj.price:,}
+  ''' + SIGNATURE_TEXT
+  return text
+
+
+# 購入通知（管理者宛・汎用）
+def notify_admin(buyer_obj, book_obj, type_label):
+  text = f'''
+    新しい購入がありました。
+
+    購入者：{buyer_obj.name}
+    クライアント：{book_obj.theme.client.name}
+    テーマ：{book_obj.theme.label or book_obj.theme.name}
+    購入種別：{type_label}
+    購入金額：¥{book_obj.price:,}
+  ''' + SIGNATURE_TEXT
   return text

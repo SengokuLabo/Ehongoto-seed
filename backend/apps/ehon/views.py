@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from urllib.parse import urlencode
 from apps.common.auth import send_mail
-from apps.common.mail_temp import pdf_purchase, print_purchase, print_admin, contact_admin, contact_reply
+from apps.common import mail_temp
 from . import models
 from .ai import generate_story
 
@@ -141,7 +141,7 @@ def generate(request):
 
 # 絵本購入後処理
 def _book_purchase(session_obj):
-  # 2. pendingデータ取得
+  # 1. pendingデータ取得
   sp_pay_id = session_obj.get('id', '')
   token = session_obj.get('metadata', {}).get('token', '')
   pending_obj = models.PendingBook.objects.filter(token=token).first()
@@ -149,7 +149,7 @@ def _book_purchase(session_obj):
     return
   data = pending_obj.data
 
-  # 3. DB保存
+  # 2. DB保存
   # 購入者登録
   buyer_data = data.get('buyer')
   buyer_obj, _ = models.Buyer.objects.get_or_create(
@@ -213,12 +213,14 @@ def _book_purchase(session_obj):
   # pendingデータ削除
   pending_obj.delete()
 
-  # 4. SESメール送信
+  # 3. SESメール送信
   home = urlencode({'client': book_obj.theme.client.name, 'theme': book_obj.theme.name})
   download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}?{home}"
+  type_label = dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')
   if data.get('type') == models.Book.TYPE_PDF:
     # PDF
-    body_text, body_html = pdf_purchase(book_obj, download_url)
+    body_text, body_html = mail_temp.pdf_purchase(book_obj, download_url)
+    # To:購入者
     send_mail(
       to=buyer_obj.email,
       subject=MAIL_SUBJECT_PDF,
@@ -229,7 +231,8 @@ def _book_purchase(session_obj):
     )
   else:
     # 製本
-    body_text, body_html = print_purchase(buyer_obj, book_obj, download_url)
+    body_text, body_html = mail_temp.print_purchase(buyer_obj, book_obj, download_url)
+    # To:購入者
     send_mail(
       to=buyer_obj.email,
       subject=MAIL_SUBJECT_PRINT,
@@ -238,15 +241,25 @@ def _book_purchase(session_obj):
       service_name=book_obj.theme.client.name,
       reply_to=book_obj.theme.client.email,
     )
-    # 運営にメール
-    send_mail(
-      to=os.environ.get('ADMIN_EMAIL'),
-      subject=MAIL_SUBJECT_PRINT,
-      body_text=print_admin(buyer_obj, book_obj),
-      body_html='',
-      service_name=book_obj.theme.client.name,
-      reply_to=book_obj.theme.client.email,
-    )
+
+  # To:クライアント
+  send_mail(
+    to=book_obj.theme.client.email,
+    subject='えほんごとのたね | ご購入通知',
+    body_text=mail_temp.notify_client(buyer_obj, book_obj, type_label),
+    body_html=None,
+    service_name='えほんごとのたね',
+    reply_to=os.environ.get('ADMIN_EMAIL'),
+  )
+  # To:管理者
+  send_mail(
+    to=os.environ.get('ADMIN_EMAIL'),
+    subject=MAIL_SUBJECT_PRINT,
+    body_text=mail_temp.notify_admin(buyer_obj, book_obj, type_label),
+    body_html='',
+    service_name=book_obj.theme.client.name,
+    reply_to=book_obj.theme.client.email,
+  )
 
 
 # 絵本データ取得 ※フロント側Canvasにて画像生成
@@ -341,7 +354,7 @@ def contact(request):
   company = body.get('company')
 
   # 2. SESメール送信
-  body_text = contact_reply(name, TYPE_LABEL[type], message)
+  body_text = mail_temp.contact_reply(name, TYPE_LABEL[type], message)
   # 自動返信
   send_mail(
     to=email,
@@ -353,7 +366,7 @@ def contact(request):
   )
 
   # 運営宛
-  body_text = contact_admin(name, TYPE_LABEL[type], email, message, tel, num, company)
+  body_text = mail_temp.contact_admin(name, TYPE_LABEL[type], email, message, tel, num, company)
   send_mail(
     to=os.environ.get('ADMIN_EMAIL'),
     subject=f'【えほんごとのたね】 {TYPE_LABEL[type]} / {name}様',

@@ -199,6 +199,7 @@ function CheckModal({ onClose }) {
         <div className='check_thumb'>
           <ul>
             <li>注文確定後のキャンセル・内容変更は、不可となります</li>
+            <li>お名前・購入内容を、絵本テーマの主催者へ共有する場合があります</li>
           </ul>
 
           <h4>PDF購入</h4>

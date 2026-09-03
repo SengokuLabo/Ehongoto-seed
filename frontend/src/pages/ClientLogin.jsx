@@ -40,6 +40,7 @@ export default function ClientLogin() {
               type='password'
               placeholder='8文字以上'
               onChange={e => setPass(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && isOK && handleNext()}
             />
           </label>
         </div>
