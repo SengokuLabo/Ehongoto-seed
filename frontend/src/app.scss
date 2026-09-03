@@ -71,7 +71,10 @@ button {
   height: 4rem;
   transition: .2s;
   font-weight: bold;
+  color: inherit;
   opacity: .7;
+  -webkit-appearance: none;
+  appearance: none;
 
   &:not(:disabled):hover {
     cursor: pointer;

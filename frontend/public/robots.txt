@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /question
+Disallow: /face
+Disallow: /image
+Disallow: /preview
+Disallow: /purchase
+Disallow: /ehon/
+Disallow: /client
+Disallow: /face_config
+
+Sitemap: https://ehongoto-seed.com/sitemap.xml
