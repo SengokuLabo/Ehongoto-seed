@@ -1,9 +1,7 @@
-// APIクライアント（全エンドポイント）
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // 接続関数
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`/api${path}`, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,
@@ -17,7 +15,7 @@ async function request(path, options = {}) {
 
 // 画像用接続関数
 async function requestImg(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`/api${path}`, {
     credentials: 'include',
     ...options,
   })
