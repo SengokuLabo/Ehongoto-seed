@@ -14,6 +14,7 @@ CSRF_COOKIE_SECURE = True
 # 許可するオリジン（えほんごとのたね本番ドメインのみ）
 CORS_ALLOWED_ORIGINS = [
     'https://ehongoto-seed.com',
+    'https://www.ehongoto-seed.com',
 ]
 
 SILENCED_SYSTEM_CHECKS = [
