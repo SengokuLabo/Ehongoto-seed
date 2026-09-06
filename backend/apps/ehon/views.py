@@ -266,7 +266,9 @@ def _book_purchase(session_obj):
 @api_view(['GET'])
 def ehon_data(request, token):
   # 購入済み絵本データ取得
-  book_obj = models.Book.objects.filter(token=token).first()
+  book_obj = models.Book.objects.select_related(
+      'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color'
+    ).filter(token=token).first()
   if not book_obj:
     return Response({'error': 'book not found'}, status=404)
 
@@ -280,6 +282,51 @@ def ehon_data(request, token):
     'title': book_obj.title,
     'status': book_obj.status,
     'pdf_exp': book_obj.pdf_exp,
+    'face': {
+      'hair': book_obj.hair.id if book_obj.hair else None,
+      'eye': book_obj.eye.id if book_obj.eye else None,
+      'nose': book_obj.nose.id if book_obj.nose else None,
+      'mouth': book_obj.mouth.id if book_obj.mouth else None,
+      'hairColor': book_obj.hair_color.color if book_obj.hair_color else None,
+      'skinColor': book_obj.skin_color.color if book_obj.skin_color else None,
+    },
+    'face_parts': {
+      'hair':  [{'id': book_obj.hair.id,  'img_path': f"{settings.MEDIA_URL}faces/{book_obj.hair.img_path}"}] if book_obj.hair else None,
+      'eye':   [{'id': book_obj.eye.id,   'img_path': f"{settings.MEDIA_URL}faces/{book_obj.eye.img_path}", 'eye_turn': book_obj.eye.eye_turn}] if book_obj.eye else None,
+      'nose':  [{'id': book_obj.nose.id,  'img_path': f"{settings.MEDIA_URL}faces/{book_obj.nose.img_path}"}] if book_obj.nose else None,
+      'mouth': [{'id': book_obj.mouth.id, 'img_path': f"{settings.MEDIA_URL}faces/{book_obj.mouth.img_path}"}] if book_obj.mouth else None,
+    },
+    'spreads': [{
+      'sp_num': sp.spread,
+      'text1': sp.text1,
+      'text2': sp.text2,
+      'img': {
+          'img_path': f"{settings.MEDIA_URL}images/{sp.img.img_path}" if sp.img else None,
+          'angle'   : sp.img.angle    if sp.img else None,
+          'size'    : sp.img.size     if sp.img else None,
+          'ox'      : sp.img.ox       if sp.img else None,
+          'tilt'    : sp.img.tilt     if sp.img else None,
+        },
+    } for sp in spread_obj]
+  }, status=200)
+
+
+# 絵本データ取得 ※SNSシェア用
+@api_view(['GET'])
+def share_data(request, token):
+  # 購入済み絵本データ取得
+  book_obj = models.Book.objects.select_related(
+      'theme__client', 'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color'
+    ).filter(token=token).first()
+  if not book_obj:
+    return Response({'error': 'book not found'}, status=404)
+
+  spread_obj = models.BookPage.objects.filter(book=book_obj).order_by('spread').select_related('img')
+
+  return Response({
+    'client': book_obj.theme.client.name,
+    'theme': book_obj.theme.name,
+    'title': book_obj.title,
     'face': {
       'hair': book_obj.hair.id if book_obj.hair else None,
       'eye': book_obj.eye.id if book_obj.eye else None,

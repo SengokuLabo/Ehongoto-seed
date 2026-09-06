@@ -16,6 +16,7 @@ import ClientAdd from './pages/ClientAdd'
 import ClientLogin from './pages/ClientLogin'
 import ClientSubsc from './pages/ClientSubsc'
 import ClientCoupon from './pages/ClientCoupon'
+import Share from './pages/Share'
 import './reset.scss'
 import './app.scss'
 
@@ -44,6 +45,9 @@ export default function App() {
           <Route path='/contact' element={<Contact />} />
           {/* 顔パーツ配置設定（管理用） */}
           <Route path='/face_config' element={<FaceConfig />} />
+
+          {/* シェア画面 */}
+          <Route path='/share/:token' element={<Share />} />
 
           {/* クーポン入力 */}
           <Route path='/coupon' element={<Coupon />} />
@@ -102,7 +106,7 @@ function Header() {
   const params = searchParams.toString()
 
   let idx = -1
-  if (location.pathname == '/' && params)  {
+  if (location.pathname == '/' && params) {
     // 質問 or テーマ一覧
     idx = 1
   } else if (location.pathname == '/face') {
@@ -117,6 +121,9 @@ function Header() {
   } else if (location.pathname == '/purchase') {
     // 注文
     idx = 5
+  } else if (location.pathname.startsWith('/share')) {
+    // シェア
+    idx = 10
   } else {
     idx = -1
   }

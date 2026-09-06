@@ -72,6 +72,10 @@ export const patchLog = (log_id) =>
 export const getHome = () =>
   request('/home')
 
+// 113. GET /api/share/:token 絵本データ取得
+export const getShareEhon = (token) =>
+  request(`/share/${token}`)
+
 
 // ***** クライアント向け *****
 // 201. POST /api/client/add 仮登録

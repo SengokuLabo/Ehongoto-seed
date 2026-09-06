@@ -11,6 +11,7 @@ import Modal from '../components/Modal'
 import { useFadeIn } from '../hooks/useFadeIn'
 
 const mock = import.meta.env.DEV ? mockData : null
+const DOMAIN = 'https://ehongoto-seed.com'
 
 // プレビューフォーム
 export default function Preview() {
@@ -23,6 +24,7 @@ export default function Preview() {
   const [isModal, setIsModal] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [snsBlob, setSnsBlob] = useState(null)
+  const [isCopy, setIsCopy] = useState(false)
   const isPc = navigator.maxTouchPoints == 0    // True:PC False:スマホ
 
   // ダウンロード用トークン
@@ -39,7 +41,7 @@ export default function Preview() {
   const isPreview = !token && !lkToken        // モザイク判定
 
   // フェードインアニメーション
-  useFadeIn()
+  useFadeIn(apiData)
 
   // 絵本データ取得API
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function Preview() {
       // スマホ：シェアシート
       try {
         sharing.current = true
-        await navigator.share({ files: [file], text: text, url: 'https://ehongoto-seed.com' })
+        await navigator.share({ files: [file], text: text, url: token? `${DOMAIN}/share/${token}` : DOMAIN })
       } catch (e) {
         if (e.name !== 'AbortError') console.error(e)
       } finally {
@@ -169,9 +171,19 @@ export default function Preview() {
             <div className='book_outer'>
               <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} w={W * 0.7} />
             </div>
-            <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
-              {isPc ? '画像を保存' : 'シェア'}
-            </button>
+            <div className='btns'>
+              {token
+                ? <button className='btn_dl' onClick={async() => {
+                  await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
+                  setIsCopy(true)
+                  setTimeout(() => setIsCopy(false), 2000)
+                }} >{isCopy ? 'コピー成功！' : 'URLをコピー'}</button>
+                : <div></div>
+              }
+              <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
+                {isPc ? '画像を保存' : 'シェア'}
+              </button>
+            </div>
           </>} />}
 
         {pdfLoading && (<WaitModal text={'PDF生成中'} />)}

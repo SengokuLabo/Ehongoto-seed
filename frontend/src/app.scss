@@ -188,21 +188,6 @@ button {
   margin: auto 2rem;
 }
 
-.btn_share {
-  &.x {
-    @include btn_ehon(#7A8A96, 1rem);
-    margin: 1rem;
-  }
-  &.line {
-    @include btn_ehon(#7DC48A, 1rem);
-    margin: 1rem;
-  }
-  &.instagram {
-    @include btn_ehon(#C4A0B4, 1rem);
-    margin: 1rem;
-  }
-}
-
 .btn_hair {
   @include btn_ehon(#A09078);
 }

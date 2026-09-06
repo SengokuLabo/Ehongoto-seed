@@ -18,6 +18,8 @@ export default function BookPreview({ spreads, face, faceParts, isPreview, W, is
   const [dir, setDir] = useState('next')      // (next, prev)
   const [wrapW, setWrapW] = useState(isAuto ? W : 0) // カード親要素幅
 
+  const [resetKey, setResetKey] = useState(0)
+
   const canvasRefs = useRef({})               // canvas要素
   const readyMap = useRef({})                 // 描画完了フラグ
   const flipFrontRef = useRef(null)           // カード表面のcanvas
@@ -105,6 +107,15 @@ export default function BookPreview({ spreads, face, faceParts, isPreview, W, is
   const tryFlip = (timer_dest, timer_dir) => {
     if (!flip(timer_dest, timer_dir)) setTimeout(() => tryFlip(timer_dest, timer_dir), 500)
   }
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') setResetKey(k => k+1)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
   useEffect(() => {
     if (!isAuto) return
     if (step === 1) {
@@ -131,12 +142,14 @@ export default function BookPreview({ spreads, face, faceParts, isPreview, W, is
             <div className={`canvas_${s}`} key={s} style={{ position: 'absolute', left: 0, display: (offset === 0 && !isFlip) ? 'flex' : 'none' }}>
               {left !== null && (
                 <BookCanvas
+                  key={`${left}_${resetKey}`}
                   spread={pages[left].spread} side='left'
                   face={face} faceParts={faceParts} isPreview={isPreview} w={W}
                   onReady={c => { canvasRefs.current[left] = c; readyMap.current[left] = true }}
-                />
-              )}
+                  />
+                )}
               <BookCanvas
+                key={`${right}_${resetKey}`}
                 spread={pages[right].spread} side={pages[right].side}
                 face={face} faceParts={faceParts} isPreview={isPreview} w={W}
                 onReady={c => { canvasRefs.current[right] = c; readyMap.current[right] = true }}

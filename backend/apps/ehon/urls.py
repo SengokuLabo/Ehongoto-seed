@@ -6,6 +6,7 @@ urlpatterns = [
   path('questions', views.get_question, name='質問取得'),
   path('generate', views.generate, name='物語作成'),
   path('ehon/<uuid:token>', views.ehon_data, name='絵本データ取得'),
+  path('share/<uuid:token>', views.share_data, name='シェア用絵本データ取得'),
   path('contact', views.contact, name='問い合わせメール'),
   path('themes', views.get_themes, name='テーマ一覧取得'),
 
