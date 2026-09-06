@@ -25,7 +25,7 @@ export default function Preview() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [snsBlob, setSnsBlob] = useState(null)
   const [isCopy, setIsCopy] = useState(false)
-  const isPc = navigator.maxTouchPoints == 0    // True:PC False:スマホ
+  const isPc = navigator.maxTouchPoints == 0
 
   // ダウンロード用トークン
   const { token } = useParams()

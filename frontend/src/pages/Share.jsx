@@ -12,6 +12,7 @@ export default function Share() {
   const [result, setResult] = useState(null)
   const [apiErr, setApiErr] = useState(null)
   const W = Math.min(Math.floor(window.innerWidth * 0.90), 720)
+  const isPc = navigator.maxTouchPoints == 0
 
   // 絵本データ取得
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function Share() {
         }
 
         <div className='btns_trans fade_in'>
-          <button className='btn_back' onClick={() => navigate('/')}>他のテーマを見る</button>
+          <button className='btn_back' onClick={() => navigate('/')}>{isPc ? '他のテーマを見る' : '他テーマ'}</button>
           <button className='btn_driv' onClick={() => navigate(`/?client=${result?.client}&theme=${result?.theme}`)}>試してみる</button>
         </div>
       </div>
