@@ -228,6 +228,7 @@ def notify_client(buyer_obj, book_obj, type_label):
 
 # 購入通知（管理者宛・汎用）
 def notify_admin(buyer_obj, book_obj, type_label):
+  bind_url = f"製本用PDF：{os.environ.get('FRONT_URL')}/bind/{book_obj.token}" if book_obj.book_type != 'pdf' else ''
   text = f'''
     新しい購入がありました。
 
@@ -236,5 +237,6 @@ def notify_admin(buyer_obj, book_obj, type_label):
     テーマ：{book_obj.theme.label or book_obj.theme.name}
     購入種別：{type_label}
     購入金額：¥{book_obj.price:,}
+    {bind_url}
   ''' + SIGNATURE_TEXT
   return text
