@@ -79,7 +79,7 @@ export default function Preview() {
         const pdfW = sp.sp_num === 0 ? W / 2 : W
         canvas.width = pdfW * 2
         canvas.height = H * 2
-        await drawSpread(canvas, sp, face, faceParts, false)
+        await drawSpread(canvas, sp, face, faceParts, false, pdfW)
         if (i > 0) pdf.addPage([pdfW, H], 'landscape')
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
       }

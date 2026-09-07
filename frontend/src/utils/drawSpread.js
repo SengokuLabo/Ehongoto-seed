@@ -115,11 +115,16 @@ function splitLines(ctx, text, maxW) {
 }
 
 // 見開き描写
-export async function drawSpread(canvas, spread, face, faceParts, isPreview) {
+export async function drawSpread(canvas, spread, face, faceParts, isPreview, layoutW = null) {
   const ctx = canvas.getContext('2d')
   const W = canvas.width
   const H = canvas.height
   ctx.clearRect(0, 0, W, H)
+
+  // 文字位置確定用
+  const lW = layoutW ?? W
+  const lH = layoutW ? Math.round(lW * H / W) : H
+  const rScale = W / lW
 
   // 表紙判定
   const isCover = spread?.sp_num === 0
@@ -199,33 +204,39 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview) {
 
   } else if (mask?.txtArea?.length > 0) {
     // 表紙以外
-    const fontSize = H * 0.03
-    const lineH = fontSize * 1.5
-    ctx.font = `bold ${fontSize}px ${font}`
+    const refCanvas = document.createElement('canvas')
+    refCanvas.width = lW
+    refCanvas.height = lH
+    const refCtx = refCanvas.getContext('2d')
+    const fontSize = lH * 0.03
+    const lineH = fontSize * 1.5 * rScale
+    refCtx.font = `bold ${fontSize}px ${font}`
+
+    ctx.font = `bold ${fontSize * rScale}px ${font}`
     ctx.textAlign = 'center'
 
     mask.txtArea.forEach((zone, i) => {
       const text = i === 0 ? spread?.text1 : spread?.text2
       if (!text) return
-      const zoneW = zone.w * W
-      const lines = splitLines(ctx, text, zoneW)
+      const zoneW = zone.w * lW
+      const lines = splitLines(refCtx, text, zoneW)
       const x = zone.x * W
       const y = zone.y * H + (zone.h * H - lines.length * lineH) / 2
       const zoneH = lines.length * lineH
 
       // 半透明領域
-      const pad = 8
+      const pad = 8 * rScale
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
       const actualW = Math.max(...lines.map(l => ctx.measureText(l).width))
-      const rectX = x + zoneW / 2 - actualW / 2 - pad
+      const rectX = x + zone.w * W / 2 - actualW / 2 - pad
       const rectW = actualW + pad * 2
-      roundRect(ctx, rectX, y - fontSize - pad, rectW, zoneH + pad * 2, 6)
+      roundRect(ctx, rectX, y - fontSize * rScale - pad, rectW, zoneH + pad * 2, 6 * rScale)
       ctx.fill()
 
       // テキスト
       ctx.fillStyle = fontColor
       lines.forEach((line, j) => {
-        ctx.fillText(line, x + zoneW / 2, y + j * lineH)
+        ctx.fillText(line, x + zone.w * W / 2, y + j * lineH)
       })
     })
   }

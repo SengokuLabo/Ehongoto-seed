@@ -48,6 +48,8 @@ export default function App() {
 
           {/* シェア画面 */}
           <Route path='/share/:token' element={<Share />} />
+          {/* 製本用PDFダウンロード */}
+          <Route path='/bind/:token' element={<Share />} />
 
           {/* クーポン入力 */}
           <Route path='/coupon' element={<Coupon />} />
