@@ -115,12 +115,12 @@ export const clientCoupon = (body) =>
   request('/client/coupon/purchase', { method: 'POST', body: JSON.stringify(body) })
 
 // 210. GET /api/client/questions 質問一覧取得
-export const themeQuestions = (themeId) =>
-  request(`/client/questions?theme=${themeId}`)
+export const qsGet = (themeId) =>
+  request(`/client/qs?theme=${themeId}`)
 
 // 211. PUT /api/client/questions 質問更新
-export const questions = (body) =>
-  request('/client/questions', { method: 'PUT', body: JSON.stringify(body) })
+export const qsEntry = (body) =>
+  request('/client/qs', { method: 'PUT', body: JSON.stringify(body) })
 
 // 212. POST /api/client/img イメージ登録
 export const imgUpload = (formData) =>

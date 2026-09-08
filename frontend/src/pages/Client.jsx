@@ -70,7 +70,7 @@ export default function Client() {
     }
   }
 
-  // クーポン分配登録
+  // クーポン分配変更
   const handleDistChange = (name, num) => {
     const newDist = { ...dist, [name]: num}
     const total = Object.values(newDist).reduce((a, d) => a + d, 0)
@@ -164,13 +164,15 @@ export default function Client() {
         {themes.map((t, i) => (
           <div key={t.id} className='theme_list'>
             <div className='client_head fade_in'>
-              <h3><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
+              <h3 className='theme_title'><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
+
+              <button className='btn_nxt' onClick={() => navigate('/client/qs', {state: {theme_id: t.id}})}>質問設定</button>
 
               <div className='theme_head_price'>
-                <p>PDF価格：{t.pdf} 円</p>
                 <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
                   クーポン購入
                 </button>
+                <p>PDF価格：{t.pdf} 円</p>
               </div>
             </div>
 

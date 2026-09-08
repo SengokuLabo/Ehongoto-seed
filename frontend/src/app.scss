@@ -241,18 +241,29 @@ table {
   border-collapse: collapse;
   text-align: center;
 
+  tr {
+    background: #f0f8ff;
+  }
+
   thead td {
     font-weight: bold;
-    background: #fafafa;
+    background: #fff;
   }
 
   tbody tr:nth-child(even) {
-    background: #fafafa;
+    background: #fff;
   }
 
   td {
-    line-height: 2.5;
-    border: 1px solid #ccc;
+    min-height: 2.5rem;
+    border: 1px solid #fff;
+  }
+
+  input, textarea {
+    width: 100%;
+    min-height: 2.5rem;
+    background: none;
+    border: none;
   }
 }
 
@@ -857,6 +868,7 @@ table {
     margin-left: 10%;
     padding: 1rem;
     border-radius: .8rem;
+    resize: none;
 
     @media (max-width: 768px) {
       width: 100%;
@@ -1233,14 +1245,12 @@ table {
 }
 
 
-// -------------- Coupon --------------
-
-
-// -------------- Login --------------
-
-
 // -------------- Client --------------
 .client {
+  tr {
+    line-height: 2.5;
+  }
+
   td {
     width: 33%;
   }
@@ -1262,16 +1272,16 @@ table {
   border-bottom: solid 1px #333;
 
   input {
-    width: 100%;
     text-align: right;
-    line-height: 2.5;
-    background: none;
-    border: none;
 
     &::-webkit-inner-spin-button {
       margin-left: 3rem;
     }
   }
+}
+
+.theme_title {
+  width: 40%;
 }
 
 .theme_head_price {
@@ -1341,4 +1351,54 @@ table {
   text-align: center;
   white-space: pre-line;
   color: orange;
+}
+
+
+// -------------- ClientQs --------------
+.client_qs {
+  input {
+    padding-left: 1rem;
+  }
+}
+
+.qs_table {
+  tr {
+    background: none;
+  }
+}
+
+.quest_row {
+  position: relative;
+
+  textarea {
+    padding: 0 3rem 0 1rem;
+    resize: none;
+    line-height: 2;
+  }
+
+  .btn_del {
+    position: absolute;
+    top: 45%;
+    right: 1rem;
+    transform: translateY(-50%);
+    height: auto;
+  }
+}
+
+.add_row {
+  background: none;
+
+  td {
+    line-height: 0;
+  }
+
+  .btn_add {
+    height: 1rem;
+    font-size: 1rem;
+    color: dimgray;
+  }
+}
+
+.qs_res {
+  text-align: center;
 }

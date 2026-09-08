@@ -25,6 +25,7 @@ urlpatterns = [
   path('client/themes', views_client.themes, name='クライアント テーマ一覧'),
   path('client/coupon/purchase', views_client.coupon_payment, name='クライアント クーポン購入'),
   path('client/coupon_dist', views_client.coupon_dist, name='クライアント クーポン配布設定'),
+  path('client/qs', views_client.question_entry, name='質問取得and更新'),
 
   # サブスク関係
   path('client/subsc/plans', views_client.subsc_plan, name='サブスク一覧取得'),

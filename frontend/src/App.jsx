@@ -17,6 +17,7 @@ import ClientLogin from './pages/ClientLogin'
 import ClientSubsc from './pages/ClientSubsc'
 import ClientCoupon from './pages/ClientCoupon'
 import Share from './pages/Share'
+import ClientQs from './pages/ClientQs'
 import './reset.scss'
 import './app.scss'
 
@@ -64,6 +65,8 @@ export default function App() {
           <Route path='/client/subsc' element={<ClientSubsc />} />
           {/* クライアント クーポン購入 */}
           <Route path='/client/coupon' element={<ClientCoupon />} />
+          {/* クライアント 質問設定 */}
+          <Route path='/client/qs' element={<ClientQs />} />
 
         </Routes>
       </div>

@@ -461,3 +461,41 @@ def subsc_portal(request):
   return Response({'portal_url': portal.url}, status=200)
 
 
+# 質問編集
+@api_view(['GET', 'PUT'])
+def question_entry(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  # 2. 質問取得
+  if request.method == 'GET':
+    theme_id = request.GET.get('theme')
+    theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id).first()
+    if not theme_obj:
+      return Response({'error': 'bad request'}, status=400)
+    qs = models.Question.objects.filter(theme=theme_obj).order_by('sort')
+
+    # レスポンス
+    return Response({ 'qs': [{'sort': q.sort, 'chapter': q.chapter, 'text': q.text} for q in qs] }, status=200)
+
+  # 3. 質問更新
+  if request.method == 'PUT':
+    body = json.loads(request.body)
+    theme_id = body.get('theme')
+    qs = body.get('qs', [])
+    theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id).first()
+    if not theme_obj:
+      return Response({'error': 'bad request'}, status=400)
+
+    # 4. 既存質問削除
+    models.Question.objects.filter(theme=theme_obj).delete()
+    models.Question.objects.bulk_create([
+      models.Question(theme=theme_obj, sort=i+1, chapter=q.get('chapter', ''), text=q.get('text', ''))
+      for i, q in enumerate(qs)
+    ])
+    return Response({'detail': 'ok!'}, status=200)
