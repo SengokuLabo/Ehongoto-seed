@@ -1,10 +1,11 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useFadeIn } from '../hooks/useFadeIn'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { getShareEhon } from '../api/client'
 import { drawSpread } from '../utils/drawSpread'
 import jsPDF from 'jspdf'
 import BookPreview from '../components/BookPreview'
+import BookCanvas from '../components/BookCanvas'
 import Modal from '../components/Modal'
 
 // シェア画面
@@ -17,6 +18,13 @@ export default function Share() {
   const H = Math.round(W * (507 / 720))
   const isPc = navigator.maxTouchPoints == 0
   const titleStyle = result?.title_style
+
+  // SNSシェア用
+  const sharing = useRef(false)
+  const [isSns, setIsSns] = useState(false)
+  const [snsBlob, setSnsBlob] = useState(null)
+  const [isCopy, setIsCopy] = useState(false)
+  const DOMAIN = 'https://ehongoto-seed.com'
 
   // パラメータ
   const { pathname } = useLocation()
@@ -32,6 +40,16 @@ export default function Share() {
       }
     })()
   }, [token])
+
+  // SNSシェア用canvas作成
+  useEffect(() => {
+    if (!isSns || snsBlob) return
+    const off = document.createElement('canvas')
+    off.width = 720; off.height = 1014
+    drawSpread(off, result?.spreads[0], result?.face, result?.face_parts, false, null, titleStyle)
+      .then(() => off.toBlob(b => setSnsBlob(b), 'image/png'))
+  }, [isSns])
+
 
   // 製本用PDFデータ取得
   useEffect(() => {
@@ -75,13 +93,44 @@ export default function Share() {
     })()
   }, [result])
 
+  // SNSシェア
+  const handleShare = async () => {
+    if (!snsBlob || sharing.current) return
+    const file = new File([snsBlob], 'ehon.png', { type: 'image/png' })
+    const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
+    if (!isPc && navigator.canShare?.({ files: [file] })) {
+      // スマホ：シェアシート
+      try {
+        sharing.current = true
+        await navigator.share({ files: [file], text: text, url: token? `${DOMAIN}/share/${token}` : DOMAIN })
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error(e)
+      } finally {
+        sharing.current = false
+      }
+    } else {
+      // PC：表紙ダウンロード
+      const url = URL.createObjectURL(snsBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'ehon.png'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+  }
+
   // フェードインアニメーション
   useFadeIn(result)
 
   return (
     <section className='share'>
       <div className='section_cont'>
-        <h2 className='fade_in'>{result?.title}</h2>
+        <div className='share_head'>
+          <h2 className='fade_in'>{result?.title}</h2>
+          <button className='btn_sns fade_in' onClick={() => setIsSns(true)}>SNS</button>
+        </div>
 
         {/* プレビュー */}
         {result &&
@@ -95,6 +144,28 @@ export default function Share() {
           <button className='btn_driv' onClick={() => navigate(`/?client=${result?.client}&theme=${result?.theme}`)}>試してみる</button>
         </div>
       </div>
+
+      {/* SNSシェアモーダル */}
+      {isSns &&
+        <Modal onClose={() => setIsSns(false)} title={'SNSシェア'}
+        cont={<>
+          <div className='book_outer'>
+            <BookCanvas spread={{ ...result?.spreads[0] }} face={result?.face} faceParts={result?.face_parts} isPreview={false} w={W * 0.7} titleStyle={titleStyle} />
+          </div>
+          <div className='btns'>
+            <button className='btn_dl' onClick={async() => {
+              await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
+              setIsCopy(true)
+              setTimeout(() => setIsCopy(false), 2000)
+            }} >
+              {isCopy ? 'コピー成功！' : 'URLをコピー'}
+            </button>
+            <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
+              {isPc ? '画像を保存' : 'シェア'}
+            </button>
+          </div>
+        </>} />
+      }
 
       {/* エラー時のモーダル */}
       {apiErr &&

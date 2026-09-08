@@ -1046,6 +1046,13 @@ table {
 }
 
 
+// -------------- Share --------------
+.share_head {
+  display: flex;
+  justify-content: space-between;
+}
+
+
 // -------------- Purchase --------------
 .pur_type {
   display: flex;

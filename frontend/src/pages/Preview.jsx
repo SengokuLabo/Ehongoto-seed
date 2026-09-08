@@ -47,9 +47,18 @@ export default function Preview() {
   // 絵本データ取得API
   useEffect(() => {
     if (!token) return
-    getEhon(token)
-      .then(data => setApiData(data))
-      .catch(err => setApiErr(err?.error || 'エラーが発生しました'))
+    (async () => {
+      try {
+        const res = await getEhon(token)
+        setApiData(res)
+      } catch (err) {
+        if (err?.status === 403) {
+          navigate(`/share/${token}`, {replace: true})
+        } else {
+          setApiErr(err?.error || 'エラーが発生しました')
+        }
+      }
+    })()
   }, [token])
 
   useEffect(() => {
@@ -185,7 +194,8 @@ export default function Preview() {
                 {isPc ? '画像を保存' : 'シェア'}
               </button>
             </div>
-          </>} />}
+          </>} />
+        }
 
         {pdfLoading && (<WaitModal text={'PDF生成中'} />)}
       </div>
