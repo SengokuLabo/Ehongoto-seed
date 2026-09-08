@@ -17,6 +17,7 @@ export default function Image() {
   const lkToken = location.state?.lkToken ?? ''
   const isFace = result?.face_parts && Object.keys(result.face_parts).length > 0
   const W = Math.min(Math.floor(window.innerWidth * 0.9), 720)
+  const titleStyle =result?.title_style
 
   const [spreads, setSpreads] = useState(() => {
     const raw = result?.spreads ?? mock?.spreads
@@ -103,7 +104,7 @@ export default function Image() {
 
         {/* プレビュー */}
         <div className='book_outer fade_in'>
-          <BookCanvas spread={spreads[step]} face={face} faceParts={faceParts} isPreview={!isCover && !lkToken} w={W} />
+          <BookCanvas spread={spreads[step]} face={face} faceParts={faceParts} isPreview={!isCover && !lkToken} w={W} titleStyle={titleStyle} />
           {!isCover &&  <div className='book_spine' />}
         </div>
         <div className='book_dots fade_in'>

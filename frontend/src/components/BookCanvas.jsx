@@ -13,7 +13,7 @@ import { drawSpread } from '../utils/drawSpread'
  *   w         - canvas 幅（px）
  *   side      - ページめくり描写ように片面描写設定
  */
-export default function BookCanvas({ spread, face, faceParts, isPreview, onReady, w = 720, side = null, classNm = 'canvas' }) {
+export default function BookCanvas({ spread, face, faceParts, isPreview, onReady, w = 720, side = null, classNm = 'canvas', titleStyle = null }) {
   const canvasRef = useRef(null)
   // 表紙判定
   const isCover = spread?.sp_num === 0
@@ -35,7 +35,7 @@ export default function BookCanvas({ spread, face, faceParts, isPreview, onReady
       const off = document.createElement('canvas')
       off.width = w
       off.height = height
-      drawSpread(off, spread, face, faceParts, isPreview).then(() => {
+      drawSpread(off, spread, face, faceParts, isPreview, null, titleStyle).then(() => {
         const ctx = temp.getContext('2d')
         ctx.clearRect(0, 0, halfW, height)
         ctx.drawImage(off, side === 'right' ? halfW : 0, 0, halfW, height, 0, 0, halfW, height)
@@ -44,7 +44,7 @@ export default function BookCanvas({ spread, face, faceParts, isPreview, onReady
       })
     } else {
       // 見開き描写
-      drawSpread(temp, spread, face, faceParts, isPreview).then(() => {
+      drawSpread(temp, spread, face, faceParts, isPreview, null, titleStyle).then(() => {
         canvas.getContext('2d').drawImage(temp, 0, 0)
         onReady?.(canvas)
       })

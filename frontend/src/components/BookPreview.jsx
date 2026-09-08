@@ -10,7 +10,7 @@ import BookCanvas from './BookCanvas'
  * @param {number}    W           横幅
  * @param {boolean}   isAuto      自動めくりフラグ
  */
-export default function BookPreview({ spreads, face, faceParts, isPreview, W, isAuto }) {
+export default function BookPreview({ spreads, face, faceParts, isPreview, W, isAuto, titleStyle=null }) {
   const FLIP_MS = 1200                        // アニメーション秒数
   const WAIT_MS = 800                         // アニメーション待機秒数
   const [step, setStep] = useState(isAuto ? 1 : 0) // 表示中の見開き
@@ -146,6 +146,7 @@ export default function BookPreview({ spreads, face, faceParts, isPreview, W, is
                   spread={pages[left].spread} side='left'
                   face={face} faceParts={faceParts} isPreview={isPreview} w={W}
                   onReady={c => { canvasRefs.current[left] = c; readyMap.current[left] = true }}
+                  titleStyle={titleStyle}
                   />
                 )}
               <BookCanvas
@@ -153,6 +154,7 @@ export default function BookPreview({ spreads, face, faceParts, isPreview, W, is
                 spread={pages[right].spread} side={pages[right].side}
                 face={face} faceParts={faceParts} isPreview={isPreview} w={W}
                 onReady={c => { canvasRefs.current[right] = c; readyMap.current[right] = true }}
+                titleStyle={titleStyle}
               />
             </div>
           )

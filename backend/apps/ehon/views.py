@@ -137,6 +137,7 @@ def generate(request):
       } for i in images],
     'log_id': log_obj.id,
     'price': price,
+    'title_style': theme_obj.title_style,
   }, status=200)
 
 # 絵本購入後処理
@@ -307,7 +308,8 @@ def ehon_data(request, token):
           'ox'      : sp.img.ox       if sp.img else None,
           'tilt'    : sp.img.tilt     if sp.img else None,
         },
-    } for sp in spread_obj]
+    } for sp in spread_obj],
+    'title_style': book_obj.theme.title_style,
   }, status=200)
 
 
@@ -352,7 +354,8 @@ def share_data(request, token):
           'ox'      : sp.img.ox       if sp.img else None,
           'tilt'    : sp.img.tilt     if sp.img else None,
         },
-    } for sp in spread_obj]
+    } for sp in spread_obj],
+    'title_style': book_obj.theme.title_style,
   }, status=200)
 
 

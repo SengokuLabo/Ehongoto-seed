@@ -39,6 +39,20 @@ JSON形式のみで返答する
 - うまくいかない日も 考え続けた（15文字）
 """
 
+# テーマ毎のタイトルスタイル
+def _title_style_default():
+  return {
+    'font_family': None,
+    'color': None,
+    'y': None,
+    'shadow': {
+      'color': None,
+      'blur': 0,
+      'ox': 0,
+      'oy': 0,
+    }}
+
+
 # 購入者情報
 class Buyer(models.Model):
   # name / email / post / ship_addr / mail_ok
@@ -137,7 +151,7 @@ class Theme(models.Model):
   price_soft = models.IntegerField(default=3500)
   price_hard = models.IntegerField(default=8000)
   face_group = models.ForeignKey(FaceGroupName, on_delete=models.PROTECT, blank=True, null=True)
-  title_style = models.JSONField(blank=True, null=True)
+  title_style = models.JSONField(default=_title_style_default, blank=True, null=True)
   is_active = models.BooleanField(default=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):

@@ -115,7 +115,7 @@ function splitLines(ctx, text, maxW) {
 }
 
 // 見開き描写
-export async function drawSpread(canvas, spread, face, faceParts, isPreview, layoutW = null) {
+export async function drawSpread(canvas, spread, face, faceParts, isPreview, layoutW = null, titleStyle = null) {
   const ctx = canvas.getContext('2d')
   const W = canvas.width
   const H = canvas.height
@@ -179,8 +179,15 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview, lay
   }
 
   // テキスト
-  const font = 'Zen Maru Gothic, sans-serif'
-  const fontColor = '#3D2B1F'
+  if (isCover && titleStyle?.font_family) {
+    await document.fonts.load(`bold 48px "${titleStyle.font_family}"`, spread?.text1 ?? '')
+  } else if (!isCover) {
+    const bodyText = (spread?.text1 ?? '') + (spread?.text2 ?? '')
+    await document.fonts.load(`bold ${Math.round(lH * 0.03)}px "Zen Maru Gothic"`, bodyText)
+  }
+  const font = (isCover && titleStyle?.font_family) ? titleStyle?.font_family : 'Zen Maru Gothic, sans-serif'
+  const fontColor = (isCover && titleStyle?.color) ? titleStyle?.color : '#3D2B1F'
+  const y = titleStyle?.y ?? 0.20
   await document.fonts.ready
   if (isCover && spread?.text1) {
     // 表紙
@@ -192,14 +199,22 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview, lay
       fontSize -= 1
       ctx.font = `bold ${fontSize}px ${font}`
     }
-    // 白縁
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
-    ctx.lineWidth = fontSize * 0.3
-    ctx.lineJoin = 'round'
-    ctx.strokeText(spread.text1, W / 2, H * 0.20)
+    if (!titleStyle?.shadow?.color) {
+      // 白縁
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
+      ctx.lineWidth = fontSize * 0.3
+      ctx.lineJoin = 'round'
+      ctx.strokeText(spread.text1, W / 2, H * y)
+    } else {
+      const s = titleStyle?.shadow
+      ctx.shadowColor = s.color ?? 'transparent'
+      ctx.shadowBlur = s.blur ?? 0
+      ctx.shadowOffsetX = s.ox ?? 0
+      ctx.shadowOffsetY = s.oy ?? 0
+    }
     // 黒字
     ctx.fillStyle = fontColor
-    ctx.fillText(spread.text1, W / 2, H * 0.20)
+    ctx.fillText(spread.text1, W / 2, H * y)
     ctx.restore()
 
   } else if (mask?.txtArea?.length > 0) {

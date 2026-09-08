@@ -32,8 +32,9 @@ export default function Preview() {
   const [apiData, setApiData] = useState(null)
   const [apiErr, setApiErr] = useState(null)
 
-  let spreads = result?.spreads ?? mock?.spreads ?? []
-  let faceParts = result?.face_parts ?? mock?.face_parts ?? []
+  const spreads = result?.spreads ?? mock?.spreads ?? []
+  const faceParts = result?.face_parts ?? mock?.face_parts ?? []
+  const titleStyle = result?.title_style
 
   const W = useMemo(() => Math.min(Math.floor(window.innerWidth * 0.90), 720), [])   // プレビュー横幅
   const H = useMemo(() => Math.round(W * (507 / 720)), [W])                          // プレビュー高さ
@@ -41,7 +42,7 @@ export default function Preview() {
   const isPreview = !token && !lkToken        // モザイク判定
 
   // フェードインアニメーション
-  useFadeIn(apiData)
+  useFadeIn(result)
 
   // 絵本データ取得API
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function Preview() {
     const off = document.createElement('canvas')
     off.width = 720
     off.height = 1014
-    drawSpread(off, spreads[0], face, faceParts, false)
+    drawSpread(off, spreads[0], face, faceParts, false, null, titleStyle)
     .then(() => off.toBlob(b => setSnsBlob(b), 'image/png'))
   }, [isModal])
 
@@ -79,7 +80,7 @@ export default function Preview() {
         const pdfW = sp.sp_num === 0 ? W / 2 : W
         canvas.width = pdfW * 2
         canvas.height = H * 2
-        await drawSpread(canvas, sp, face, faceParts, false, pdfW)
+        await drawSpread(canvas, sp, face, faceParts, false, pdfW, titleStyle)
         if (i > 0) pdf.addPage([pdfW, H], 'landscape')
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
       }
@@ -154,7 +155,7 @@ export default function Preview() {
 
         {/* プレビュー */}
         <div className='fade_in'>
-          <BookPreview spreads={spreads} face={face} faceParts={faceParts} isPreview={isPreview} W={W} isAuto={false} />
+          <BookPreview spreads={spreads} face={face} faceParts={faceParts} isPreview={isPreview} W={W} isAuto={false} titleStyle={titleStyle} />
         </div>
 
         {isPreview &&
@@ -169,7 +170,7 @@ export default function Preview() {
           <Modal onClose={() => setIsModal(false)} title={'SNSシェア'}
           cont={<>
             <div className='book_outer'>
-              <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} w={W * 0.7} />
+              <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} w={W * 0.7} titleStyle={titleStyle} />
             </div>
             <div className='btns'>
               {token

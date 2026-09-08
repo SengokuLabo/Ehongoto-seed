@@ -16,6 +16,7 @@ export default function Share() {
   const W = Math.min(Math.floor(window.innerWidth * 0.90), 720)
   const H = Math.round(W * (507 / 720))
   const isPc = navigator.maxTouchPoints == 0
+  const titleStyle = result?.title_style
 
   // パラメータ
   const { pathname } = useLocation()
@@ -47,7 +48,7 @@ export default function Share() {
 
         if (sp.sp_num === 0) {
           // 表紙
-          await drawSpread(canvas, sp, result?.face, result?.face_parts, false)
+          await drawSpread(canvas, sp, result?.face, result?.face_parts, false, null, result?.title_style)
           pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
         } else {
           // 本文: 見開きを左右に分割して追加
@@ -85,7 +86,7 @@ export default function Share() {
         {/* プレビュー */}
         {result &&
           <div className='fade_in'>
-            <BookPreview spreads={result?.spreads} face={result?.face} faceParts={result?.face_parts} isPreview={false} W={W} isAuto={false} />
+            <BookPreview spreads={result?.spreads} face={result?.face} faceParts={result?.face_parts} isPreview={false} W={W} isAuto={false} titleStyle={titleStyle} />
           </div>
         }
 
