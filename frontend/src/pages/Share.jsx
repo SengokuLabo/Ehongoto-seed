@@ -101,7 +101,7 @@ export default function Share() {
   const handleShare = async () => {
     if (!snsBlob || sharing.current) return
     const file = new File([snsBlob], 'ehon.png', { type: 'image/png' })
-    const text = `『${spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
+    const text = `『${result?.spreads[0]?.text1}』を作ったよ！ #えほんごとのたね #AI生成絵本`
     if (!isPc && navigator.canShare?.({ files: [file] })) {
       // スマホ：シェアシート
       try {
@@ -162,7 +162,7 @@ export default function Share() {
               setIsCopy(true)
               setTimeout(() => setIsCopy(false), 2000)
             }} >
-              {isCopy ? 'コピー成功！' : 'URLをコピー'}
+              {isCopy ? 'コピー成功' : 'URLコピー'}
             </button>
             <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
               {isPc ? '画像を保存' : 'シェア'}

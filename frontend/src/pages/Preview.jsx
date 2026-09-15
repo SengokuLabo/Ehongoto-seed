@@ -190,7 +190,7 @@ export default function Preview() {
                   await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
                   setIsCopy(true)
                   setTimeout(() => setIsCopy(false), 2000)
-                }} >{isCopy ? 'コピー成功！' : 'URLをコピー'}</button>
+                }} >{isCopy ? 'コピー成功' : 'URLコピー'}</button>
                 : <div></div>
               }
               <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
