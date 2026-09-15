@@ -53,40 +53,44 @@ export default function Share() {
 
   // 製本用PDFデータ取得
   useEffect(() => {
-    (async () => {
+    const PDF_W = 720
+    const PDF_H = Math.round(PDF_W * (507 / 720))
+    const PDF_SCALE = 4
+
+    ; (async () => {
       if (!pathname.startsWith('/bind') || !result) return
 
-      const pdf = new jsPDF({ unit: 'px', format: [W / 2, H] })
+      const pdf = new jsPDF({ unit: 'px', format: [PDF_W / 2, PDF_H] })
       for (let i = 0; i < result?.spreads.length - 1; i++) {
         const sp = result?.spreads[i]
         const canvas = document.createElement('canvas')
-        const pdfW = W / 2
-        canvas.width = (sp.sp_num === 0 ? W / 2 : W) * 2
-        canvas.height = H * 2
+        const pdfW = PDF_W / 2
+        canvas.width = (sp.sp_num === 0 ? PDF_W / 2 : PDF_W) * PDF_SCALE
+        canvas.height = PDF_H * PDF_SCALE
 
         if (sp.sp_num === 0) {
           // 表紙
-          await drawSpread(canvas, sp, result?.face, result?.face_parts, false, null, result?.title_style)
-          pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
+          await drawSpread(canvas, sp, result?.face, result?.face_parts, false, PDF_W/2, result?.title_style)
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, PDF_H)
         } else {
           // 本文: 見開きを左右に分割して追加
-          await drawSpread(canvas, sp, result?.face, result?.face_parts, false, W)
+          await drawSpread(canvas, sp, result?.face, result?.face_parts, false, PDF_W)
 
           // 左ページ
           const left = document.createElement('canvas')
-          left.width = pdfW
-          left.height = H
-          left.getContext('2d').drawImage(canvas, 0, 0, W, H * 2, 0, 0, pdfW, H)
-          pdf.addPage([pdfW, H])
-          pdf.addImage(left.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
+          left.width = canvas.width/2
+          left.height = canvas.height
+          left.getContext('2d').drawImage(canvas, 0, 0, canvas.width/2, canvas.height, 0, 0, left.width, left.height)
+          pdf.addPage([pdfW, PDF_H])
+          pdf.addImage(left.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, PDF_H)
 
           // 右ページ
           const right = document.createElement('canvas')
-          right.width = pdfW
-          right.height = H
-          right.getContext('2d').drawImage(canvas, W, 0, W, H * 2, 0, 0, pdfW, H)
-          pdf.addPage([pdfW, H])
-          pdf.addImage(right.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
+          right.width = canvas.width/2
+          right.height = canvas.height
+          right.getContext('2d').drawImage(canvas, canvas.width/2, 0, canvas.width/2, canvas.height, 0, 0, right.width, right.height)
+          pdf.addPage([pdfW, PDF_H])
+          pdf.addImage(right.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, PDF_H)
         }
       }
       pdf.save(`製本依頼_${result?.title ?? 'ehon'}.pdf`)

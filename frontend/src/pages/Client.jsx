@@ -172,7 +172,7 @@ export default function Client() {
                 <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
                   クーポン購入
                 </button>
-                <p>PDF価格：{t.pdf} 円</p>
+                <p>クーポン価格：{t.pdf} 円</p>
               </div>
             </div>
 

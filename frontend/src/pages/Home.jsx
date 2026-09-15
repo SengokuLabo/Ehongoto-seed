@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { getHome } from '../api/client'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useNavigationType } from 'react-router-dom'
 import BookPreview from '../components/BookPreview'
 import { mockData } from '../mock'
 import WaitModal from '../components/WaitModal'
 import { useFadeIn } from '../hooks/useFadeIn'
+
+let homeCache = null
 
 // ホーム
 export default function Home() {
@@ -21,12 +23,24 @@ export default function Home() {
   const spreads = mockData?.spreads ?? []
   const face = mockData?.face ?? []
   const faceParts = mockData?.face_parts ?? []
+  const isPop = useNavigationType() === 'POP'
 
   // ホーム情報取得
   useEffect(() => {
-    (async () => {
+    if (isPop && homeCache) {
+      setThemes(homeCache.themes)
+      setClients(homeCache.clients)
+      setPPdf(homeCache.price_pdf)
+      setPSoft(homeCache.price_soft)
+      setPHard(homeCache.price_hard)
+      setLoading(false)
+      return
+    }
+
+      ; (async () => {
       try {
         const res = await getHome()
+        homeCache = res
         setThemes(res.themes)
         setClients(res.clients)
         setPPdf(res.price_pdf)
@@ -43,7 +57,7 @@ export default function Home() {
   }, [])
 
   // ロード後にフェードインアニメーション追加
-  useFadeIn(!loading)
+  useFadeIn(!loading, true, isPop)
 
   // テーマ選択
   const handleTheme = (client, theme) => {
@@ -198,7 +212,7 @@ export default function Home() {
         </div>
       </section>
 
-      {loading && <WaitModal text={'ロード中'} />}
+      {loading && !isPop && <WaitModal text={'ロード中'} />}
     </main>
   )
 }

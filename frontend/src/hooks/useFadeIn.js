@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 // フェードインフック
-export function useFadeIn(ready = true, resetDelay = false) {
+export function useFadeIn(ready = true, resetDelay = false, instant = false) {
   useEffect(() => {
     if (!ready) return
 
@@ -15,9 +15,17 @@ export function useFadeIn(ready = true, resetDelay = false) {
         el.className = el.className.replace(/\bdelay\d+\b/g, '').trim()
       }
 
-      // ファーストビューにdelayを自動割り振り
       const rect = el.getBoundingClientRect()
-      if (rect.top < window.innerHeight) {
+
+      if (instant) {
+        if (rect.top < window.innerHeight) el.classList.add('visible')
+        return
+      }
+
+      // ファーストビューにdelayを自動割り振り
+      if (rect.bottom < 0) {
+        el.classList.add('visible')
+      } else if (rect.top < window.innerHeight) {
         el.classList.add(`delay${delayIdx++}`)
       }
     })

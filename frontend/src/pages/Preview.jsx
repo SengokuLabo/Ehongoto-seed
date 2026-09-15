@@ -82,16 +82,19 @@ export default function Preview() {
   const generatePdf = async () => {
     setPdfLoading(true)
     try {
-      const pdf = new jsPDF({ unit: 'px', format: [W / 2, H] })
+      const PDF_W = 720
+      const PDF_H = Math.round(PDF_W * (507 / 720))
+      const PDF_SCALE = 4
+      const pdf = new jsPDF({ unit: 'px', format: [PDF_W / 2, PDF_H] })
       for (let i = 0; i < spreads.length - 1; i++) {
         const sp = spreads[i]
         const canvas = document.createElement('canvas')
-        const pdfW = sp.sp_num === 0 ? W / 2 : W
-        canvas.width = pdfW * 2
-        canvas.height = H * 2
+        const pdfW = sp.sp_num === 0 ? PDF_W / 2 : PDF_W
+        canvas.width = pdfW * PDF_SCALE
+        canvas.height = PDF_H * PDF_SCALE
         await drawSpread(canvas, sp, face, faceParts, false, pdfW, titleStyle)
-        if (i > 0) pdf.addPage([pdfW, H], 'landscape')
-        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, H)
+        if (i > 0) pdf.addPage([pdfW, PDF_H], 'landscape')
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, PDF_H)
       }
       pdf.save(`${result?.title ?? 'ehon'}.pdf`)
     } finally {
