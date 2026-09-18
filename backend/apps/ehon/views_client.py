@@ -572,7 +572,25 @@ def theme_del(request):
   except json.JSONDecodeError:
     return Response({'error': 'bad request'}, status=400)
 
-  # 2. テーマステータス更新
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_subsc_obj or client_obj.is_free:
+    # サブスク情報がない場合は、不要アカウントとして処理終了
+    return Response({'detail': 'ok!'}, status=200)
+
+  # 2. アクティブテーマ数取得
+  theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
+  extra_needed = max(0, theme_cnt-2)
+
+  # 3. Stripe更新
+  try:
+    items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+    extra_items = [i for i in items.data if i.price.id == os.environ['STRIPE_ADD_THEME_PRICE_ID']]
+    for item in extra_items[extra_needed:]:
+      stripe.SubscriptionItem.delete(item.id)
+  except Exception as e:
+    return Response({'error': str(e)}, status=400)
+
+  # 4. テーマステータス更新
   theme_id = body.get('theme')
   if not theme_id:
     return Response({'error': 'bad request'}, status=400)
@@ -581,25 +599,6 @@ def theme_del(request):
   )
   if not updated:
     return Response({'error': 'bad request'}, status=400)
-
-  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
-  if not c_subsc_obj or client_obj.is_free:
-    # サブスク情報がない場合は、不要アカウントとして処理終了
-    return Response({'detail': 'ok!'}, status=200)
-
-  # 3. アクティブテーマ数取得
-  theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
-  extra_needed = max(0, theme_cnt-1)
-
-  # 4. Stripe更新
-  try:
-    items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-    add_price_id = os.environ['STRIPE_ADD_THEME_PRICE_ID']
-    extra_items = [i for i in items.data if i.price.id == add_price_id]
-    for item in extra_items[extra_needed:]:
-      stripe.SubscriptionItem.delete(item.id)
-  except Exception as e:
-    return Response({'error': str(e)}, status=400)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
