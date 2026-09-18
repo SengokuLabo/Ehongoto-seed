@@ -24,6 +24,7 @@ export default function Client() {
   const [resCancel, setResCancel] = useState(null)  // サブスク解約結果
   const [isCancel, setIsCancel] = useState(false)   // サブスク解約モーダル
   const [isCheck, setIsCheck] = useState(false)     // サブスク解約チェック
+  const [resSubsc, setResSubsc] = useState(null)    // サブスク更新モーダル
 
   const [tSwich, setTSwich] = useState(null)        // テーマ切替
 
@@ -108,8 +109,9 @@ export default function Client() {
         await themeRestore({'theme': tSwich.id})
       }
       setThemes(themes.map(t => t.id === tSwich.id ? { ...t, is_active: !tSwich.flag } : t))
+      setResSubsc('テーマ利用切替完了')
     } catch (err) {
-      console.log(err.error || err.message)
+      setResSubsc(err.error || err.message)
     }
     setTSwich(null)
   }
@@ -219,7 +221,7 @@ export default function Client() {
 
               <div className='client_head fade_in'>
 
-                <button className='btn_pre' onClick={() => navigate('/client/qs', {state: {theme: t.id}})}>質問設定</button>
+                <button className='btn_pre' onClick={() => navigate('/client/qs', {state: {theme: t.id, themeNm: t.name}})}>質問設定</button>
 
                 <div className='theme_head_price'>
                   <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme: t.id, themeNm: t.name, pdf: t.pdf } })}>
@@ -269,8 +271,7 @@ export default function Client() {
 
         {/* クーポン分配確定 */}
         {resDist &&
-          <Modal onClose={() => setResDist(null)} title='クーポン分配確定'
-          cont={<>{resDist}</>}
+          <Modal onClose={() => setResDist(null)} title='クーポン分配確定' cont={<>{resDist}</>}
           />}
 
         {/* 解約確認 */}
@@ -312,10 +313,11 @@ export default function Client() {
                   <button className='btn_driv' onClick={handleSwitch}>利用再開</button>
                 </div></>
             }
-
           </>}
-          />
-        }
+        />}
+
+        {/* テーマ利用切替結果 */}
+        {resSubsc && <Modal title='テーマ利用切替' onClose={() => setResSubsc(null)} cont={resSubsc} />}
       </div>
     </section>
   )

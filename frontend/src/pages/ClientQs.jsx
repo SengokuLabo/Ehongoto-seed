@@ -9,6 +9,7 @@ export default function ClientQs() {
   const navigate = useNavigate()
   const locate = useLocation()
   const theme = locate.state?.theme
+  const themeNm = locate.state?.themeNm
 
   const [init, setInit] = useState([])
   const [qs, setQs] = useState([])
@@ -69,7 +70,7 @@ export default function ClientQs() {
   return (
     <section className='client_qs'>
       <div className='section_cont'>
-        <h2 className='fade_in'>質問設定</h2>
+        <h2 className='fade_in'>質問設定 <small>[{themeNm}]</small></h2>
 
         {/* 質問リスト */}
         <table className='fade_in'>

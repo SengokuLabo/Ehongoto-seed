@@ -590,7 +590,9 @@ def theme_del(request):
 
   # 4. Stripe更新
   items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-  for item in items.data[extra_needed:]:
+  add_price_id = os.environ['STRIPE_ADD_THEME_PRICE_ID']
+  extra_items = [i for i in items.data if i.price.id == add_price_id]
+  for item in extra_items[extra_needed:]:
     stripe.SubscriptionItem.delete(item.id)
 
   # レスポンス
