@@ -620,7 +620,27 @@ def theme_restore(request):
   except json.JSONDecodeError:
     return Response({'error': 'bad request'}, status=400)
 
-  # 2. テーマ復元
+  # 2. アクティブテーマ数を元にサブスク登録変更
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_subsc_obj or client_obj.is_free:
+    # サブスク情報がない場合は、不要アカウントとして処理終了
+    return Response({'detail': 'ok!'}, status=200)
+
+  try:
+    theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
+    if theme_cnt > 0:
+      # サブスク登録数取得 (基本 + 追加)
+      items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+      if theme_cnt >= len(items.data):
+        # サブスク登録変更
+        stripe.SubscriptionItem.create(
+          subscription=c_subsc_obj.sp_sub_id,
+          price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
+        )
+  except Exception as e:
+    return Response({'error': str(e)}, status=400)
+
+  # 3. テーマ復元
   theme_id = body.get('theme')
   if not theme_id:
     return Response({'error': 'bad request'}, status=400)
@@ -629,26 +649,6 @@ def theme_restore(request):
     return Response({'error': 'bad request'}, status=400)
   theme_obj.is_active = True
   theme_obj.save(update_fields=['is_active'])
-
-  # 3. アクティブテーマ数を元にサブスク登録変更
-  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
-  if not c_subsc_obj or client_obj.is_free:
-    # サブスク情報がない場合は、不要アカウントとして処理終了
-    return Response({'detail': 'ok!'}, status=200)
-
-  try:
-    theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()-1
-    if theme_cnt > 0:
-      # サブスク登録変更
-      items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-      if theme_cnt > len(items.data):
-        stripe.SubscriptionItem.create(
-          subscription=c_subsc_obj.sp_sub_id,
-          price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
-          metadata={'theme': theme_obj.id},
-        )
-  except Exception as e:
-    return Response({'error': str(e)}, status=400)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
