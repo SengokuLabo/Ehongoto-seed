@@ -502,17 +502,20 @@ def theme_add(request):
     face_group_obj = models.FaceGroupName.objects.filter(name='base').first()
 
   # 5. アクティブテーマ数を元にサブスク登録変更
-  if c_subsc_obj and not client_obj.is_free:
-    theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
-    if theme_cnt > 0:
-      # サブスク登録数取得 (基本 + 追加)
-      items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-      if theme_cnt >= len(items.data):
-        # サブスク登録変更
-        stripe.SubscriptionItem.create(
-          subscription=c_subsc_obj.sp_sub_id,
-          price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
-        )
+  try:
+    if c_subsc_obj and not client_obj.is_free:
+      theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
+      if theme_cnt > 0:
+        # サブスク登録数取得 (基本 + 追加)
+        items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+        if theme_cnt >= len(items.data):
+          # サブスク登録変更
+          stripe.SubscriptionItem.create(
+            subscription=c_subsc_obj.sp_sub_id,
+            price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
+          )
+  except Exception as e:
+    return Response({'error': str(e)}, status=400)
 
   # 6. テーマ作成
   theme_obj = models.Theme.objects.create(
@@ -589,11 +592,14 @@ def theme_del(request):
   extra_needed = max(0, theme_cnt-1)
 
   # 4. Stripe更新
-  items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-  add_price_id = os.environ['STRIPE_ADD_THEME_PRICE_ID']
-  extra_items = [i for i in items.data if i.price.id == add_price_id]
-  for item in extra_items[extra_needed:]:
-    stripe.SubscriptionItem.delete(item.id)
+  try:
+    items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+    add_price_id = os.environ['STRIPE_ADD_THEME_PRICE_ID']
+    extra_items = [i for i in items.data if i.price.id == add_price_id]
+    for item in extra_items[extra_needed:]:
+      stripe.SubscriptionItem.delete(item.id)
+  except Exception as e:
+    return Response({'error': str(e)}, status=400)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
@@ -631,16 +637,19 @@ def theme_restore(request):
     # サブスク情報がない場合は、不要アカウントとして処理終了
     return Response({'detail': 'ok!'}, status=200)
 
-  theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()-1
-  if theme_cnt > 0:
-    # サブスク登録変更
-    items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-    if theme_cnt > len(items.data):
-      stripe.SubscriptionItem.create(
-        subscription=c_subsc_obj.sp_sub_id,
-        price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
-        metadata={'theme': theme_obj.id},
-      )
+  try:
+    theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()-1
+    if theme_cnt > 0:
+      # サブスク登録変更
+      items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+      if theme_cnt > len(items.data):
+        stripe.SubscriptionItem.create(
+          subscription=c_subsc_obj.sp_sub_id,
+          price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
+          metadata={'theme': theme_obj.id},
+        )
+  except Exception as e:
+    return Response({'error': str(e)}, status=400)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
