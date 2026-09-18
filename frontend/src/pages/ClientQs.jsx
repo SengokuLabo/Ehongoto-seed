@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useFadeIn } from '../hooks/useFadeIn'
 import { qsEntry, qsGet } from '../api/client'
 import { useLocation, useNavigate } from 'react-router-dom'
-
+import Modal from '../components/Modal'
 
 // クライアント 質問更新
 export default function ClientQs() {
@@ -21,7 +21,7 @@ export default function ClientQs() {
         const res = await qsGet(theme)
         setInit(res.qs.map(q => q.text))
         setQs(res.qs.map(q => q.text))
-        if (qs.length === 0) {
+        if (res.qs.length === 0) {
           setInit([''])
           setQs([''])
         }
@@ -102,12 +102,12 @@ export default function ClientQs() {
         </div>
 
         <div className='btns_trans fade_in'>
-          <button className='btn_pre' onClick={() => navigate(-1)}>戻る</button>
+          <button className='btn_pre' onClick={() => navigate('/client')}>戻る</button>
           <button className='btn_nxt' onClick={handleEntry}>登録</button>
         </div>
 
         {apiRes &&
-          <p className='qs_res'>{apiRes}</p>
+          <Modal title='質問登録' onClose={() => setApiRes(null)} cont={apiRes} />
         }
       </div>
     </section>

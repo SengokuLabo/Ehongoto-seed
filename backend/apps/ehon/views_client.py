@@ -480,7 +480,7 @@ def theme_add(request):
   # 2. サブスク情報確認
   c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
   if not c_subsc_obj and not client_obj.is_free:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'do not have a subscription'}, status=400)
 
   # 3. バリデーション
   try:
@@ -492,9 +492,9 @@ def theme_add(request):
   desc = body.get('desc')
   is_face = body.get('is_face')
   if not name or not re.match(r'^[a-zA-Z0-9_]+$', name):
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'theme name contains characters that cannot be used'}, status=400)
   if models.Theme.objects.filter(client=client_obj, name=name).exists():
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'theme with the same name already'}, status=409)
 
   # 4. 顔パーツグループ取得
   face_group_obj = None
@@ -505,9 +505,10 @@ def theme_add(request):
   if c_subsc_obj and not client_obj.is_free:
     theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
     if theme_cnt > 0:
-      # サブスク登録変更
+      # サブスク登録数取得 (基本 + 追加)
       items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
-      if theme_cnt > len(items.data):
+      if theme_cnt >= len(items.data):
+        # サブスク登録変更
         stripe.SubscriptionItem.create(
           subscription=c_subsc_obj.sp_sub_id,
           price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
