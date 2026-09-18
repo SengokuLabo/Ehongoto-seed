@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
-import { clientThemes, couponDist, subscCancel, subscPortal } from "../api/client"
+import { clientThemes, couponDist, subscCancel, subscPortal, themeDel, themeIcon, themeRestore } from "../api/client"
 import { useNavigate } from "react-router-dom"
 import Modal from '../components/Modal'
 import { useFadeIn } from '../hooks/useFadeIn'
+import ImgUpload from '../components/ImgUpload'
+import { clientLogo } from '../api/client'
 
 // クライアント ダッシュボード
 export default function Client() {
@@ -23,6 +25,10 @@ export default function Client() {
   const [isCancel, setIsCancel] = useState(false)   // サブスク解約モーダル
   const [isCheck, setIsCheck] = useState(false)     // サブスク解約チェック
 
+  const [tSwich, setTSwich] = useState(null)        // テーマ切替
+
+  const [logo, setLogo] = useState(null)            // ロゴファイル
+
   useEffect(() => {
     (async () => {
       try {
@@ -34,6 +40,7 @@ export default function Client() {
           return
         }
         setClient(res.client)
+        setLogo(res.logo)
         setThemes(res.themes)
         setMaxCnt(res.max_cnt)
         setTotalCnt(res.max_cnt)
@@ -90,6 +97,35 @@ export default function Client() {
     }
   }
 
+  // テーマ利用切替
+  const handleSwitch = async () => {
+    try {
+      if (tSwich.flag) {
+        // 利用 → 停止
+        await themeDel({'theme': tSwich.id})
+      } else {
+        // 停止 → 利用
+        await themeRestore({'theme': tSwich.id})
+      }
+      setThemes(themes.map(t => t.id === tSwich.id ? { ...t, is_active: !tSwich.flag } : t))
+    } catch (err) {
+      console.log(err.error || err.message)
+    }
+    setTSwich(null)
+  }
+
+  // ロゴ登録
+  const handleLogo = async (file) => {
+    if (!file) return
+    await clientLogo(file)
+  }
+
+  // テーマアイコン登録
+  const handleIcon = async (id, file) => {
+    if (!file) return
+    await themeIcon(id, file)
+  }
+
   // フェードインアニメーション
   useFadeIn(client)
 
@@ -106,6 +142,9 @@ export default function Client() {
         {/* 解約処理結果 */}
         {resCancel && <p className='cancel_err'>{resCancel}</p>}
         {isFree && <p className='fade_in'>- サブスク不要アカウント</p>}
+        <div className='fade_in'>
+          <ImgUpload label='ロゴ変更' dir={'logos'} img={logo} onSave={handleLogo} />
+        </div>
 
         {/* サブスク情報 */}
         {subsc &&
@@ -130,8 +169,9 @@ export default function Client() {
         }
 
         {/* クーポン */}
-        {maxCnt > 0 &&
+        {maxCnt > 0 && !isFree &&
           <div className='coupon_dist'>
+            <h2 className='fade_in'>クーポン</h2>
             <div className='client_head fade_in'>
               <div>
                 <h3>クーポン配分設定</h3>
@@ -161,46 +201,59 @@ export default function Client() {
         }
 
         {/* テーマ情報 */}
-        {themes.map((t, i) => (
-          <div key={t.id} className='theme_list'>
-            <div className='client_head fade_in'>
-              <h3 className='theme_title'><small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)}</h3>
-
-              <button className='btn_nxt' onClick={() => navigate('/client/qs', {state: {theme_id: t.id}})}>質問設定</button>
-
-              <div className='theme_head_price'>
-                <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme_id: t.id, theme: t.name, pdf: t.pdf } })}>
-                  クーポン購入
-                </button>
-                <p>クーポン価格：{t.pdf} 円</p>
+        <div className='client_themes'>
+          <h2 className='fade_in'>テーマ</h2>
+          <button className='btn_dl fade_in' onClick={() => navigate('/client/theme', {state: {isFree: isFree}})}>新規テーマ追加</button>
+          {themes.map((t, i) => (
+            <div key={t.id} className='theme_list'>
+              <div className='client_head fade_in'>
+                <h3 className='theme_title fade_in'>
+                  <small>テーマ:</small> {t.name}{t.year && (<small> 【{t.year}年】</small>)} <small> [{t.is_active ? '利用中' : '停止中'}]</small>
+                </h3>
+                <button className='btn_nxt' onClick={() => setTSwich({ 'id': t.id, 'flag': t.is_active })}>{t.is_active ? '停止する' : '利用再開'}</button>
               </div>
-            </div>
 
-            {t.coupons.length > 0 && (
-              <table className='coupons fade_in'>
-                <thead>
-                  <tr><td>コード</td><td>残数</td><td>有効期限</td></tr>
-                </thead>
-                <tbody>
-                  {t.coupons.map((c, i) => (
-                    <tr key={c.code} className={
-                      c.rest_cnt === 0 ||
-                      (c.valid_until && new Date(c.valid_until).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0))
-                      ? 'coupon_ng' : ''
-                    }>
-                      <td>{c.code}</td>
-                      <td>{c.rest_cnt}/{c.max_uses}</td>
-                      <td>{c.valid_until ? new Date(c.valid_until).toLocaleDateString('ja-JP') : '期限なし'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            {t.coupons.length === 0 && (
-              <p className='fade_in'>クーポンはまだありません</p>
-            )}
-          </div>
-        ))}
+              <div className='fade_in'>
+                <ImgUpload label='アイコン変更' dir={'logos'} img={t.icon} onSave={(file) => handleIcon(t.id, file)} />
+              </div>
+
+              <div className='client_head fade_in'>
+
+                <button className='btn_pre' onClick={() => navigate('/client/qs', {state: {theme: t.id}})}>質問設定</button>
+
+                <div className='theme_head_price'>
+                  <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme: t.id, themeNm: t.name, pdf: t.pdf } })}>
+                    クーポン購入
+                  </button>
+                </div>
+              </div>
+
+              {t.coupons.length > 0 && (
+                <table className='coupons fade_in'>
+                  <thead>
+                    <tr><td>コード</td><td>残数</td><td>有効期限</td></tr>
+                  </thead>
+                  <tbody>
+                    {t.coupons.map((c, i) => (
+                      <tr key={c.code} className={
+                        c.rest_cnt === 0 ||
+                        (c.valid_until && new Date(c.valid_until).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0))
+                        ? 'coupon_ng' : ''
+                      }>
+                        <td>{c.code}</td>
+                        <td>{c.rest_cnt}/{c.max_uses}</td>
+                        <td>{c.valid_until ? new Date(c.valid_until).toLocaleDateString('ja-JP') : '期限なし'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {t.coupons.length === 0 && (
+                <p className='fade_in'>クーポンはまだありません</p>
+              )}
+            </div>
+          ))}
+        </div>
 
         {/* ログインエラー */}
         {logErr &&
@@ -214,7 +267,7 @@ export default function Client() {
           </>}
           />}
 
-        {/* 分配確定 */}
+        {/* クーポン分配確定 */}
         {resDist &&
           <Modal onClose={() => setResDist(null)} title='クーポン分配確定'
           cont={<>{resDist}</>}
@@ -234,7 +287,35 @@ export default function Client() {
             </label>
             <button className='btn_back' onClick={handleCancel} disabled={!isCheck}>解約</button>
           </>}
-          />}
+        />}
+
+        {/* テーマ切替確認 */}
+        {tSwich &&
+          <Modal onClose={() => setTSwich(null)} title={'テーマ利用切替'}
+          cont={<>
+            {tSwich.flag
+              ? <><p>
+                テーマを停止します<br />停止後はこのテーマで絵本制作ができなくなります<br />
+                {!isFree && <>サブスク金額が月額500円減額されます <br /></> }
+                ※ダッシュボードからいつでも利用切替可能です
+                </p>
+                <div className='btns'>
+                  <div />
+                  <button className='btn_driv' onClick={handleSwitch}>停止する</button>
+                </div></>
+              : <><p>
+                テーマを利用再開します<br />再開後はこのテーマで絵本制作ができるようになります<br />
+                {!isFree && 'サブスク金額が月額500円増額されます' }
+                </p>
+                <div className='btns'>
+                  <div />
+                  <button className='btn_driv' onClick={handleSwitch}>利用再開</button>
+                </div></>
+            }
+
+          </>}
+          />
+        }
       </div>
     </section>
   )

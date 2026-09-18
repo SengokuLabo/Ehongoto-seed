@@ -8,7 +8,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 export default function ClientQs() {
   const navigate = useNavigate()
   const locate = useLocation()
-  const theme_id = locate.state?.theme_id
+  const theme = locate.state?.theme
+
   const [init, setInit] = useState([])
   const [qs, setQs] = useState([])
   const [apiRes, setApiRes] = useState('')
@@ -17,9 +18,13 @@ export default function ClientQs() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await qsGet(theme_id)
+        const res = await qsGet(theme)
         setInit(res.qs.map(q => q.text))
         setQs(res.qs.map(q => q.text))
+        if (qs.length === 0) {
+          setInit([''])
+          setQs([''])
+        }
         setApiRes('')
       } catch (err) {
         setApiRes('データ取得失敗しました')
@@ -51,7 +56,7 @@ export default function ClientQs() {
 
 
     try {
-      const res = await qsEntry({ 'theme': theme_id, 'qs': qs.map((text, i) => ({ sort: i + 1, text: text })) })
+      const res = await qsEntry({ 'theme': theme, 'qs': qs.map((text, i) => ({ sort: i + 1, text: text })) })
       setApiRes('登録完了しました')
     } catch (err) {
       setApiRes('登録失敗しました')
@@ -78,7 +83,7 @@ export default function ClientQs() {
                   <td>{i+1}</td>
                   <td>
                     <textarea value={text} rows={1} onChange={e => setQs(prev => prev.map((t, idx) => idx === i ? e.target.value : t))} />
-                    <button className='btn_del' onClick={() => handleDelRow(i)}>×</button>
+                    {i > 0 && <button className='btn_del' onClick={() => handleDelRow(i)}>×</button> }
                   </td>
                 </tr>
                 <tr className='add_row'>

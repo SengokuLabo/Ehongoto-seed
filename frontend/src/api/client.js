@@ -130,19 +130,33 @@ export const imgUpload = (formData) =>
 export const clientStats = () =>
   request('/client/stats')
 
-// 214. POST /api/client/theme テーマ追加
-export const clientThemeAdd = (body) =>
-  request('/client/theme', { method: 'POST', body: JSON.stringify(body) })
+// 214. POST /api/client/theme/add テーマ追加
+export const themeAdd = (body) =>
+  request('/client/theme/add', { method: 'POST', body: JSON.stringify(body) })
 
-// 215. DELETE /api/client/theme/{id} テーマ無効化
-export const clientThemeDelete = (id) =>
-  request(`/client/theme/${id}`, { method: 'DELETE' })
+// 215. DELETE /api/client/theme/del テーマ無効化
+export const themeDel = (body) =>
+  request('/client/theme/del', { method: 'DELETE', body: JSON.stringify(body) })
 
-// 216. PATCH /api/client/theme/{id} テーマ復元
-export const clientThemeRestore = (id) =>
-  request(`/client/theme/${id}`, { method: 'PATCH' })
+// 216. PATCH /api/client/theme/restore テーマ復元
+export const themeRestore = (body) =>
+  request('/client/theme/restore', { method: 'PATCH', body: JSON.stringify(body) })
 
 // 217. POST /api/client/subsc/portal サブスク登録変更
 export const subscPortal = () =>
   request('/client/subsc/portal', { method: 'POST' })
 
+// 218. POST /api/client/logo クライアントロゴ登録
+export const clientLogo = (file) => {
+  const fd = new FormData()
+  fd.append('logo', file)
+  return requestImg('/client/logo', { method: 'POST', body: fd })
+}
+
+// 219. POST /api/client/theme/icon テーマアイコン登録
+export const themeIcon = (theme, file) => {
+  const fd = new FormData()
+  fd.append('theme', theme)
+  fd.append('icon', file)
+  return requestImg('/client/theme/icon', { method: 'POST', body: fd })
+}

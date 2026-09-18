@@ -1,4 +1,4 @@
-import json, os, stripe, secrets, string
+import json, os, stripe, secrets, string, re
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils import timezone
@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login as auth_login
 from . import models
 from apps.common.auth import send_mail
 from apps.common.mail_temp import client_add, client_verify, client_coupon
+from .imgs import img_upload
 
 # クーポンコード発行
 def gen_code():
@@ -153,6 +154,9 @@ def themes(request):
     'id': t.id,
     'name': t.name,
     'year': t.year,
+    'icon': t.icon,
+    'is_active': t.is_active,
+    'face': t.face_group_id is not None,
     'pdf': t.price_pdf,
     'coupon_cnt': c_dist.get(t.id),
     'coupons': [{
@@ -169,6 +173,7 @@ def themes(request):
   # レスポンス
   return Response({
     'client': client_obj.name,
+    'logo': client_obj.logo,
     'themes': theme_list,
     'subsc': c_subsc,
     'max_cnt': max_cnt,
@@ -461,6 +466,183 @@ def subsc_portal(request):
   return Response({'portal_url': portal.url}, status=200)
 
 
+# テーマ追加
+@api_view(['POST'])
+def theme_add(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  # 2. サブスク情報確認
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_subsc_obj and not client_obj.is_free:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 3. バリデーション
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+  name = body.get('name')
+  label = body.get('label')
+  desc = body.get('desc')
+  is_face = body.get('is_face')
+  if not name or not re.match(r'^[a-zA-Z0-9_]+$', name):
+    return Response({'error': 'bad request'}, status=400)
+  if models.Theme.objects.filter(client=client_obj, name=name).exists():
+    return Response({'error': 'bad request'}, status=400)
+
+  # 4. 顔パーツグループ取得
+  face_group_obj = None
+  if is_face:
+    face_group_obj = models.FaceGroupName.objects.filter(name='base').first()
+
+  # 5. アクティブテーマ数を元にサブスク登録変更
+  if c_subsc_obj and not client_obj.is_free:
+    theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
+    if theme_cnt > 0:
+      # サブスク登録変更
+      items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+      if theme_cnt > len(items.data):
+        stripe.SubscriptionItem.create(
+          subscription=c_subsc_obj.sp_sub_id,
+          price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
+        )
+
+  # 6. テーマ作成
+  theme_obj = models.Theme.objects.create(
+    client=client_obj,
+    name=name,
+    label=label,
+    desc=desc,
+    face_group=face_group_obj,
+  )
+
+  # 7. スタイル登録
+  models.Style.objects.create(
+    theme=theme_obj,
+    key='torn',
+    label='トーン',
+    options=["やさしい絵本風(静かであたたかい)", "希望に向かうストーリー(前向き)", "リアルで力強い(等身大)", "詩的で余白のある(言葉少なめ)", "こども向けにやわらかく"],
+  )
+  models.Style.objects.create(
+    theme=theme_obj,
+    key='pov',
+    label='主人公視点',
+    options=["わたし", "ぼく", "第三者(あの人)"],
+  )
+  models.Style.objects.create(
+    theme=theme_obj,
+    key='target',
+    label='読者ターゲット',
+    options=["こども向け", "大人向け", "こどもと大人"],
+  )
+  models.Style.objects.create(
+    theme=theme_obj,
+    key='ending',
+    label='ラストの余韻',
+    options=["背中を押す", "そっと寄り添う", "問いを残す"],
+  )
+
+  # レスポンス
+  return Response({'theme_id': theme_obj.id}, status=200)
+
+
+# テーマ削除
+@api_view(['DELETE'])
+def theme_del(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. テーマステータス更新
+  theme_id = body.get('theme')
+  if not theme_id:
+    return Response({'error': 'bad request'}, status=400)
+  updated = models.Theme.objects.filter(client=client_obj, id=theme_id).update(
+    is_active = False
+  )
+  if not updated:
+    return Response({'error': 'bad request'}, status=400)
+
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_subsc_obj or client_obj.is_free:
+    # サブスク情報がない場合は、不要アカウントとして処理終了
+    return Response({'detail': 'ok!'}, status=200)
+
+  # 3. アクティブテーマ数取得
+  theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()
+  extra_needed = max(0, theme_cnt-1)
+
+  # 4. Stripe更新
+  items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+  for item in items.data[extra_needed:]:
+    stripe.SubscriptionItem.delete(item.id)
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)
+
+
+# テーマ復元
+@api_view(['PATCH'])
+def theme_restore(request):
+  # 1. セッション認証確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. テーマ復元
+  theme_id = body.get('theme')
+  if not theme_id:
+    return Response({'error': 'bad request'}, status=400)
+  theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id).first()
+  if not theme_obj:
+    return Response({'error': 'bad request'}, status=400)
+  theme_obj.is_active = True
+  theme_obj.save(update_fields=['is_active'])
+
+  # 3. アクティブテーマ数を元にサブスク登録変更
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  if not c_subsc_obj or client_obj.is_free:
+    # サブスク情報がない場合は、不要アカウントとして処理終了
+    return Response({'detail': 'ok!'}, status=200)
+
+  theme_cnt = models.Theme.objects.filter(client=client_obj, is_active=True).count()-1
+  if theme_cnt > 0:
+    # サブスク登録変更
+    items = stripe.SubscriptionItem.list(subscription=c_subsc_obj.sp_sub_id)
+    if theme_cnt > len(items.data):
+      stripe.SubscriptionItem.create(
+        subscription=c_subsc_obj.sp_sub_id,
+        price=os.environ['STRIPE_ADD_THEME_PRICE_ID'],
+        metadata={'theme': theme_obj.id},
+      )
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)
+
+
 # 質問編集
 @api_view(['GET', 'PUT'])
 def question_entry(request):
@@ -485,7 +667,10 @@ def question_entry(request):
 
   # 3. 質問更新
   if request.method == 'PUT':
-    body = json.loads(request.body)
+    try:
+      body = json.loads(request.body)
+    except json.JSONDecodeError:
+      return Response({'error': 'bad request'}, status=400)
     theme_id = body.get('theme')
     qs = body.get('qs', [])
     theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id).first()
@@ -499,3 +684,66 @@ def question_entry(request):
       for i, q in enumerate(qs)
     ])
     return Response({'detail': 'ok!'}, status=200)
+
+
+# クライアントロゴ登録
+@api_view(['POST'])
+def client_logo(request):
+  # 1. セッション確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  # 2. ロゴ保存
+  logo = request.FILES.get('logo')
+  if not logo:
+    return Response({'error': 'bad request'}, status=400)
+
+  try:
+    file_name = img_upload(logo, 'logos', f'client_{client_obj.name}')
+  except ValueError as e:
+    return Response({'error': str(e)}, status=400)
+
+  # 3. クライアント情報更新
+  client_obj.logo = file_name
+  client_obj.save()
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)
+
+
+# テーマアイコン登録
+@api_view(['POST'])
+def theme_icon(request):
+  # 1. セッション確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  theme_id = request.POST.get('theme')
+  theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id).first()
+  if not theme_obj:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. アイコン保存
+  icon = request.FILES.get('icon')
+  if not icon:
+    return Response({'error': 'bad request'}, status=400)
+
+  try:
+    file_name = img_upload(icon, 'logos', f'theme_{theme_obj.name}')
+  except ValueError as e:
+    return Response({'error': str(e)}, status=400)
+
+  # 3. テーマ情報更新
+  theme_obj.icon = file_name
+  theme_obj.save()
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)

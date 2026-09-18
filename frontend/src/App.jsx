@@ -18,6 +18,7 @@ import ClientSubsc from './pages/ClientSubsc'
 import ClientCoupon from './pages/ClientCoupon'
 import Share from './pages/Share'
 import ClientQs from './pages/ClientQs'
+import ClinetTheme from './pages/ClientTheme'
 import './reset.scss'
 import './app.scss'
 
@@ -67,6 +68,8 @@ export default function App() {
           <Route path='/client/coupon' element={<ClientCoupon />} />
           {/* クライアント 質問設定 */}
           <Route path='/client/qs' element={<ClientQs />} />
+          {/* クライアント テーマ追加 */}
+          <Route path='/client/theme' element={<ClinetTheme />} />
 
         </Routes>
       </div>

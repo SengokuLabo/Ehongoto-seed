@@ -267,6 +267,11 @@ table {
   }
 }
 
+// テキストエリア
+textarea {
+  resize: none;
+}
+
 // ドット
 .book_dots {
   display: flex;
@@ -287,6 +292,31 @@ table {
 
   .dot_off {
     background: rgba(112, 64, 32, .3);
+  }
+}
+
+
+// 画像アップロード
+.img_upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 2rem auto;
+
+  input {
+    display: none;
+  }
+
+  .img {
+    width: 20rem;
+    height: 20rem;
+
+    img {
+      object-fit: contain;
+      width: 100%;
+      height: 100%;
+    }
   }
 }
 
@@ -868,7 +898,6 @@ table {
     margin-left: 10%;
     padding: 1rem;
     border-radius: .8rem;
-    resize: none;
 
     @media (max-width: 768px) {
       width: 100%;
@@ -1219,9 +1248,8 @@ table {
 
     .err {
       position: absolute;
-      top: 50%;
+      bottom: 1rem;
       right: 1rem;
-      transform: translateY(-50%);
       color: red;
     }
 
@@ -1261,6 +1289,10 @@ table {
   td {
     width: 33%;
   }
+
+  h2 {
+    margin: auto;
+  }
 }
 
 .client_head {
@@ -1276,7 +1308,6 @@ table {
 .coupon_dist {
   margin-bottom: 5rem;
   padding-bottom: 3rem;
-  border-bottom: solid 1px #333;
 
   input {
     text-align: right;
@@ -1285,6 +1316,16 @@ table {
       margin-left: 3rem;
     }
   }
+}
+
+.client_themes {
+  padding-top: 2rem;
+  border-top: solid 1px #333;
+}
+
+.theme_list {
+  padding: 2rem;
+  border-bottom: solid 1px #8FBCBC;
 }
 
 .theme_title {
@@ -1379,7 +1420,6 @@ table {
 
   textarea {
     padding: 0 3rem 0 1rem;
-    resize: none;
     line-height: 2;
   }
 
@@ -1409,3 +1449,6 @@ table {
 .qs_res {
   text-align: center;
 }
+
+
+// -------------- ClientTheme --------------

@@ -185,13 +185,13 @@ export default function Preview() {
               <BookCanvas spread={{ ...spreads[0] }} face={face} faceParts={faceParts} isPreview={false} w={W * 0.7} titleStyle={titleStyle} />
             </div>
             <div className='btns'>
-              {token
+              {token && isPc
                 ? <button className='btn_dl' onClick={async() => {
                   await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
                   setIsCopy(true)
                   setTimeout(() => setIsCopy(false), 2000)
-                }} >{isCopy ? 'コピー成功' : 'URLコピー'}</button>
-                : <div></div>
+                }} >{isCopy ? 'コピー成功！' : 'URLをコピー'}</button>
+                : <div />
               }
               <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
                 {isPc ? '画像を保存' : 'シェア'}

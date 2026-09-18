@@ -157,13 +157,16 @@ export default function Share() {
             <BookCanvas spread={{ ...result?.spreads[0] }} face={result?.face} faceParts={result?.face_parts} isPreview={false} w={W * 0.7} titleStyle={titleStyle} />
           </div>
           <div className='btns'>
-            <button className='btn_dl' onClick={async() => {
-              await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
-              setIsCopy(true)
-              setTimeout(() => setIsCopy(false), 2000)
-            }} >
-              {isCopy ? 'コピー成功' : 'URLコピー'}
-            </button>
+            {isPc
+              ? <button className='btn_dl' onClick={async() => {
+                await navigator.clipboard.writeText(`${DOMAIN}/share/${token}`)
+                setIsCopy(true)
+                setTimeout(() => setIsCopy(false), 2000)
+              }} >
+                {isCopy ? 'コピー成功！' : 'URLをコピー'}
+              </button>
+              : <div />
+            }
             <button className='btn_sns' onClick={handleShare} disabled={!snsBlob}>
               {isPc ? '画像を保存' : 'シェア'}
             </button>

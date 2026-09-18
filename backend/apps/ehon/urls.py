@@ -26,6 +26,11 @@ urlpatterns = [
   path('client/coupon/purchase', views_client.coupon_payment, name='クライアント クーポン購入'),
   path('client/coupon_dist', views_client.coupon_dist, name='クライアント クーポン配布設定'),
   path('client/qs', views_client.question_entry, name='質問取得and更新'),
+  path('client/theme/add', views_client.theme_add, name='テーマ追加'),
+  path('client/theme/del', views_client.theme_del, name='テーマ削除'),
+  path('client/theme/restore', views_client.theme_restore, name='テーマ復元'),
+  path('client/logo', views_client.client_logo, name='クライアントロゴ登録'),
+  path('client/theme/icon', views_client.theme_icon, name='テーマアイコン登録'),
 
   # サブスク関係
   path('client/subsc/plans', views_client.subsc_plan, name='サブスク一覧取得'),

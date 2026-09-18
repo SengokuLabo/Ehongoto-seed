@@ -7,17 +7,18 @@ import { useFadeIn } from '../hooks/useFadeIn'
 export default function ClientCoupon() {
   const navigate = useNavigate()
   const locate = useLocation()
+  const theme = locate.state?.theme
+  const themeNm = locate.state?.themeNm
+  const pdf = locate.state?.pdf
+
   const [count, setCount] = useState(1)
   const [resErr, setResErr] = useState(false)
   const [payCheck, setPayCheck] = useState(false)
   const [isModal, setIsModal] = useState(false)
-  const theme_id = locate.state?.theme_id
-  const theme = locate.state?.theme
-  const pdf = locate.state?.pdf
 
   const handleNext = async() => {
     try {
-      const res = await clientCoupon({ theme_id: theme_id, count: count })
+      const res = await clientCoupon({ theme_id: theme, count: count })
       window.location.href = res.ck_url
     } catch (err) {
       setResErr(true)
@@ -31,7 +32,7 @@ export default function ClientCoupon() {
     <section className='client_coupon'>
       <div className='section_cont'>
         <h2 className='fade_in'>クーポン購入</h2>
-        <h3 className='fade_in'>【 {theme} 】</h3>
+        <h3 className='fade_in'>【 {themeNm} 】</h3>
         <div className='coupon_cnt fade_in'>
           <label>数量
             <input type='number' min={1} onChange={(e) => setCount(Number(e.target.value))} value={count}/>

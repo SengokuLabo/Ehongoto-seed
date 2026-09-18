@@ -144,7 +144,7 @@ class Theme(models.Model):
   name = models.CharField(max_length=50)
   year = models.SmallIntegerField(blank=True, null=True)
   label = models.CharField(max_length=50, blank=True, default='')
-  icon = models.CharField(max_length=255, blank=True, null=True)
+  icon = models.CharField(max_length=255, blank=True, default='')
   desc = models.TextField(blank=True, default='')
   prompt = models.TextField(default=SYSTEM_PROMPT)
   price_pdf = models.IntegerField(default=500)

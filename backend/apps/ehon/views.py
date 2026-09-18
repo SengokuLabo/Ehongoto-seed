@@ -457,7 +457,7 @@ def get_home(request):
   if not ehn_client_obj:
     return Response({'error': 'bad request'}, status=400)
 
-  themes_obj = models.Theme.objects.filter(client=ehn_client_obj, is_active=True).order_by('id')
+  themes_obj = models.Theme.objects.filter(client=ehn_client_obj, is_active=True).exclude(icon='').order_by('id')
   theme_obj = themes_obj.first()
   if not theme_obj:
     return Response({'error': 'bad request'}, status=400)
@@ -471,7 +471,7 @@ def get_home(request):
   } for t in themes_obj]
 
   # 2. クライアント一覧取得
-  client_obj = models.Client.objects.filter(is_active=True).order_by('id')
+  client_obj = models.Client.objects.filter(is_active=True).exclude(logo='').order_by('id')
   client_list = [{
     'client': c.name,
     'label': c.label,
