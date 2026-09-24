@@ -205,7 +205,7 @@ export default function Client() {
         {/* テーマ情報 */}
         <div className='client_themes'>
           <h2 className='fade_in'>テーマ</h2>
-          <button className='btn_dl fade_in' onClick={() => navigate('/client/theme', {state: {isFree: isFree}})}>新規テーマ追加</button>
+          <button className='btn_dl fade_in' onClick={() => navigate('/client/theme', {state: {isFree: isFree || themes.filter(t => t.is_active).length === 0}})}>新規テーマ追加</button>
           {themes.map((t, i) => (
             <div key={t.id} className='theme_list'>
               <div className='client_head fade_in'>

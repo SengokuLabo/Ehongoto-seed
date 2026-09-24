@@ -41,9 +41,10 @@ def coupon_check(request):
     return Response({'error': 'bad request'}, status=400)
 
   # クーポン有効期限切れチェック
-  exp = timezone.localtime(coupon_obj.valid_until)
-  if coupon_obj.valid_until and exp.date() < timezone.localtime(timezone.now()).date():
-    return Response({'error': 'bad request'}, status=410)
+  if coupon_obj.valid_until:
+    exp = timezone.localtime(coupon_obj.valid_until)
+    if exp.date() < timezone.localtime(timezone.now()).date():
+      return Response({'error': 'bad request'}, status=410)
 
   # 3. 期限切れ排他解除
   models.LkCoupon.objects.filter(coupon=coupon_obj, exp_at__lt=timezone.now()).delete()
@@ -149,7 +150,7 @@ def coupon_use(request):
   # 5. ダウンロードメール
   home = urlencode({'client': book_obj.theme.client.name, 'theme': book_obj.theme.name})
   download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}?{home}"
-  type_label = dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')
+  type_label = f"{dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')} (クーポン利用)"
   body_text, body_html = mail_temp.pdf_purchase(book_obj, download_url)
   # To:購入者
   send_mail(

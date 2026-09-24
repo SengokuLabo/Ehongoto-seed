@@ -221,7 +221,6 @@ def notify_client(buyer_obj, book_obj, type_label):
 
     購入者：{buyer_obj.name}
     購入種別：{type_label}
-    購入金額：¥{book_obj.price:,}
   ''' + SIGNATURE_TEXT
   return text
 
