@@ -31,7 +31,9 @@ def add(request):
   email = body.get('email')
   password = body.get('password')
   client_name = body.get('client_name')
-  if not name or not email or not password or not client_name:
+  label = body.get('label')
+  desc = body.get ('desc')
+  if not name or not email or not password or not client_name or not label or not desc:
     return Response({'error': 'bad request'}, status=400)
   if models.User.objects.filter(email=email).exists():
     return Response({'error': 'already exists'}, status=409)
@@ -52,6 +54,8 @@ def add(request):
       user=user_obj,
       name=client_name,
       email=email,
+      label=label,
+      desc=desc,
       chk_exp=(timezone.now() + timedelta(days=1)),
     )
 
@@ -173,12 +177,36 @@ def themes(request):
   # レスポンス
   return Response({
     'client': client_obj.name,
+    'label': client_obj.label,
+    'desc': client_obj.desc,
     'logo': client_obj.logo,
     'themes': theme_list,
     'subsc': c_subsc,
     'max_cnt': max_cnt,
     'is_free': client_obj.is_free,
   }, status=200)
+
+
+# クライアント 情報更新
+@api_view(['PATCH'])
+def profile(request):
+  # 1. バリデーション
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj.label = body.get('label', client_obj.label)
+  client_obj.desc = body.get ('desc', client_obj.desc)
+  client_obj.save(update_fields=['label', 'desc'])
+  return Response({'detail': 'ok!'}, status=200)
 
 
 # クライアント クーポン購入 決済要求

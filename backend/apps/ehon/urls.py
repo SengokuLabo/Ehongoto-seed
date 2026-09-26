@@ -21,6 +21,7 @@ urlpatterns = [
   # クライアント関係
   path('client/add', views_client.add, name='クライアント仮登録'),
   path('client/verify/<uuid:token>', views_client.verify, name='クライアント本登録'),
+  path('client/profile', views_client.profile, name='クライアント 情報更新'),
   path('client/login', views_client.login, name='クライアント ログイン'),
   path('client/themes', views_client.themes, name='クライアント テーマ一覧'),
   path('client/coupon/purchase', views_client.coupon_payment, name='クライアント クーポン購入'),

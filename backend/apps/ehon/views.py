@@ -471,7 +471,7 @@ def get_home(request):
   } for t in themes_obj]
 
   # 2. クライアント一覧取得
-  client_obj = models.Client.objects.filter(is_active=True).exclude(logo='').order_by('id')
+  client_obj = models.Client.objects.filter(is_active=True, theme__is_active=True).exclude(logo='').distinct().order_by('id')
   client_list = [{
     'client': c.name,
     'label': c.label,

@@ -126,7 +126,7 @@ def contact_admin(name, type_label, email, message, tel=None, num=None, company=
   text = f'''
     【お問い合わせ】{type_label}
 
-    お名前：{name}
+    お名前：{name} 様
     メール：{email}{extra}
 
     ----
@@ -160,7 +160,7 @@ def print_admin(buyer_obj, book_obj):
   text = f'''
     新しい製本申し込みがありました。
 
-    お名前：{buyer_obj.name}
+    お名前：{buyer_obj.name} 様
     メール：{buyer_obj.email}
     お届け先：{buyer_obj.post} {buyer_obj.address}
     絵本ID：{book_obj.id}
@@ -178,6 +178,7 @@ def client_add(name, url):
     仮登録を受け付けました。
     以下のURLから登録を完了してください。
     登録確定後にテーマ作成について、改めてご連絡いたします。
+    ※有効期限は、メール受信時より24時間
 
     ▼ 本登録URL
     {url}
@@ -193,7 +194,7 @@ def client_verify(name, email, created_at):
     新規クライアントの本登録が完了しました。
     テーマ作成について、連絡お願いします。
 
-    お名前：{name}
+    お名前：{name} 様
     メール：{email}
     登録日時：{created_at}
   ''' + SIGNATURE_TEXT
@@ -206,7 +207,7 @@ def client_coupon(name, email, theme):
   text = f'''
     クライアントからクーポン購入がありました。
 
-    お名前：{name}
+    お名前：{name} 様
     メール：{email}
     テーマ：{theme}
   ''' + SIGNATURE_TEXT
@@ -219,7 +220,7 @@ def notify_client(buyer_obj, book_obj, type_label):
   text = f'''
     {book_obj.theme.label or book_obj.theme.name} に新しいご注文がありました。
 
-    購入者：{buyer_obj.name}
+    購入者：{buyer_obj.name} 様
     購入種別：{type_label}
   ''' + SIGNATURE_TEXT
   return text
@@ -231,7 +232,7 @@ def notify_admin(buyer_obj, book_obj, type_label):
   text = f'''
     新しい購入がありました。
 
-    購入者：{buyer_obj.name}
+    購入者：{buyer_obj.name} 様
     クライアント：{book_obj.theme.client.name}
     テーマ：{book_obj.theme.label or book_obj.theme.name}
     購入種別：{type_label}

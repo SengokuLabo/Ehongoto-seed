@@ -7,17 +7,19 @@ export default function ClientAdd() {
   const [fName, setFName] = useState('')
   const [eName, setEName] = useState('')
   const [clientNm, setClientNm] = useState('')
+  const [label, setLabel] = useState('')
+  const [desc, setDesc] = useState('')
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
   const [pass2, setPass2] = useState('')
   const [addOk, setAddOk] = useState(false)
   const [resErr, setResErr] = useState('')
   const isClientNmOk = /^[a-zA-Z0-9]+$/.test(clientNm)
-  const isOK = fName && eName && clientNm && isClientNmOk && email && pass && (pass === pass2) && pass.length >= 8
+  const isOK = fName && eName && clientNm && isClientNmOk && email && pass && (pass === pass2) && pass.length >= 8 && label && desc
 
   const handleNext = async () => {
     try {
-      await clientAdd({ name: `${fName} ${eName}`, email: email, password: pass, client_name: clientNm })
+      await clientAdd({ name: `${fName} ${eName}`, email: email, password: pass, client_name: clientNm, label: label, desc: desc })
       setAddOk(true)
     } catch (err) {
       setResErr(err.status)
@@ -49,19 +51,33 @@ export default function ClientAdd() {
               />
             </div>
           </label>
-          <label className='fade_in'>クライアント名
-            <input
-              type='text'
-              placeholder='ehongoto'
-              onChange={e => setClientNm(e.target.value)}
-            />
-            {clientNm && !isClientNmOk && (<p className='err'>英数字で入力してください</p>)}
-          </label>
           <label className='fade_in'>メール
             <input
               type='email'
               placeholder='example@mail.com'
               onChange={e => setEmail(e.target.value)}
+            />
+          </label>
+          <label className='fade_in'>クライアント名
+            <input
+              type='text'
+              placeholder='ehongoto ※英数字のみ'
+              onChange={e => setClientNm(e.target.value)}
+            />
+            {clientNm && !isClientNmOk && (<p className='err'>英数字で入力してください</p>)}
+          </label>
+          <label className='fade_in'>表示名
+            <input
+              type='text'
+              placeholder='エホンゴト'
+              onChange={e => setLabel(e.target.value)}
+            />
+          </label>
+          <label className='fade_in'>説明文
+            <input
+              type='text'
+              placeholder='あなたの想いや人生を、世界にひとつの物語に。 ※30字以内'
+              onChange={e => setDesc(e.target.value)}
             />
           </label>
           <label className='fade_in'>パスワード

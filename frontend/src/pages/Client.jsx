@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { clientThemes, couponDist, subscCancel, subscPortal, themeDel, themeIcon, themeRestore } from "../api/client"
+import { clientProfile, clientThemes, couponDist, subscCancel, subscPortal, themeDel, themeIcon, themeRestore } from "../api/client"
 import { useNavigate } from "react-router-dom"
 import Modal from '../components/Modal'
 import { useFadeIn } from '../hooks/useFadeIn'
@@ -11,6 +11,9 @@ export default function Client() {
   const navigate = useNavigate()
 
   const [client, setClient] = useState('')          // クライアント名
+  const [label, setLabel] = useState('')            // 表示名
+  const [desc, setDesc] = useState('')              // 説明文
+  const [isEdit, setIsEdit] = useState(false)       // 編集フラグ
   const [themes, setThemes] = useState([])          // テーマリスト
   const [logErr, setLogErr] = useState(false)       // ログインエラーモーダル
 
@@ -41,6 +44,8 @@ export default function Client() {
           return
         }
         setClient(res.client)
+        setLabel(res.label)
+        setDesc(res.desc)
         setLogo(res.logo)
         setThemes(res.themes)
         setMaxCnt(res.max_cnt)
@@ -116,6 +121,12 @@ export default function Client() {
     setTSwich(null)
   }
 
+  // クライアント情報登録
+  const handleProfile = async (label, desc) => {
+    await clientProfile({ label, desc })
+    setIsEdit(false)
+  }
+
   // ロゴ登録
   const handleLogo = async (file) => {
     if (!file) return
@@ -144,9 +155,35 @@ export default function Client() {
         {/* 解約処理結果 */}
         {resCancel && <p className='cancel_err'>{resCancel}</p>}
         {isFree && <p className='fade_in'>- サブスク不要アカウント</p>}
+
+        {/* ロゴ */}
         <div className='fade_in'>
           <ImgUpload label='ロゴ変更' dir={'logos'} img={logo} onSave={handleLogo} />
         </div>
+
+        {/* クライアント情報 */}
+        {isEdit
+          ? <div className='fade_in contact_user'>
+            <label>表示名
+              <input type='text' value={label} onChange={e => setLabel(e.target.value)} />
+            </label>
+            <label>説明文
+              <input type='text' value={desc} onChange={e => setDesc(e.target.value)} />
+            </label>
+            <div className='btns'>
+              <div />
+              <button className='btn_driv' onClick={() => handleProfile(label, desc)}>保存</button>
+            </div>
+          </div>
+          : <div className='fade_in contact_user'>
+            <p>{label}</p>
+            <p>{desc}</p>
+            <div className='btns'>
+              <div />
+              <button className='btn_driv' onClick={() => setIsEdit(true)}>編集</button>
+            </div>
+          </div>
+        }
 
         {/* サブスク情報 */}
         {subsc &&

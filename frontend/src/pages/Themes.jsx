@@ -9,6 +9,8 @@ export default function Themes() {
   const [themeList, setThemeList] = useState([])
   const [paramError, setParamError] = useState(false)
 
+  const [isEmpty, setIsEmpty] = useState(false)
+
   // パラメータ取得
   const [serchParams] = useSearchParams()
   const client = serchParams.get('client')
@@ -17,7 +19,7 @@ export default function Themes() {
     if (!client) return
     themes(client)
       .then(data => {
-        if (data.themes.length === 0) setParamError(true)
+        if (data.themes.length === 0) setIsEmpty(true)
         else setThemeList(data.themes)
       })
       .catch(() => setParamError(true))
@@ -29,6 +31,15 @@ export default function Themes() {
       <div className='section_cont'>
         <p>クライアントが無効です</p>
         <p>クライアントにURLを確認してください</p>
+      </div>
+    )
+  }
+
+  // テーマなし時の表示
+  if (isEmpty) {
+    return (
+      <div className='section_cont'>
+        <p>現在公開中のテーマはありません</p>
       </div>
     )
   }

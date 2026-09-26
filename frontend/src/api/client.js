@@ -160,3 +160,7 @@ export const themeIcon = (theme, file) => {
   fd.append('icon', file)
   return requestImg('/client/theme/icon', { method: 'POST', body: fd })
 }
+
+// 220. PATCH /api/client/profile クライアント情報更新
+export const clientProfile = (body) =>
+  request('/client/profile', { method: 'PATCH', body: JSON.stringify(body) })
