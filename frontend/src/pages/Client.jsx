@@ -162,28 +162,21 @@ export default function Client() {
         </div>
 
         {/* クライアント情報 */}
-        {isEdit
-          ? <div className='fade_in contact_user'>
-            <label>表示名
-              <input type='text' value={label} onChange={e => setLabel(e.target.value)} />
-            </label>
-            <label>説明文
-              <input type='text' value={desc} onChange={e => setDesc(e.target.value)} />
-            </label>
-            <div className='btns'>
-              <div />
-              <button className='btn_driv' onClick={() => handleProfile(label, desc)}>保存</button>
-            </div>
+        <div className='fade_in contact_user'>
+          <label>表示名
+            <input type='text' value={label} onChange={e => setLabel(e.target.value)} disabled={!isEdit} />
+          </label>
+          <label>説明文
+            <input type='text' value={desc} onChange={e => setDesc(e.target.value)} disabled={!isEdit} />
+          </label>
+          <div className='btns'>
+            <div />
+            {isEdit
+              ? <button className='btn_driv' onClick={() => handleProfile(label, desc)}>保存</button>
+              : <button className='btn_driv' onClick={() => setIsEdit(true)}>編集</button>
+            }
           </div>
-          : <div className='fade_in contact_user'>
-            <p>{label}</p>
-            <p>{desc}</p>
-            <div className='btns'>
-              <div />
-              <button className='btn_driv' onClick={() => setIsEdit(true)}>編集</button>
-            </div>
-          </div>
-        }
+        </div>
 
         {/* サブスク情報 */}
         {subsc &&
