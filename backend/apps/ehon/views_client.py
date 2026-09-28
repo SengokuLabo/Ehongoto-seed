@@ -4,8 +4,10 @@ from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
+from django.db.models import Q, Prefetch
 from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login as auth_login
+from dateutil.relativedelta import relativedelta
 from . import models
 from apps.common.auth import send_mail
 from apps.common.mail_temp import client_add, client_verify, client_coupon
@@ -153,7 +155,9 @@ def themes(request):
   c_dist = {d.theme_id: d.coupon_cnt for d in c_dist_obj} if c_dist_obj else {}
 
   # 3. テーマ取得
-  themes_obj = models.Theme.objects.filter(client=client_obj).prefetch_related('coupon_set')
+  cutoff = timezone.now() - relativedelta(months=1)
+  coupon_qs = models.Coupon.objects.filter(Q(valid_until__isnull=True) | Q(valid_until__gte=cutoff))
+  themes_obj = models.Theme.objects.filter(client=client_obj).prefetch_related(Prefetch('coupon_set', queryset=coupon_qs))
   theme_list = [{
     'id': t.id,
     'name': t.name,
@@ -411,15 +415,26 @@ def _subsc_update(obj):
     models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).update(status=mapped)
 
 
-# 毎月課金確認後のクーポン使用回数リセット処理
+# 毎月課金確認後の翌月クーポン配布処理
 def _coupon_reset(obj):
   sp_sub_id = obj.get('subscription', '')
-  c_subsc_obj = models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).select_related('subsc').first()
+  c_subsc_obj = models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).first()
   if not c_subsc_obj:
     return
-  models.CouponDist.objects.filter(client_subsc=c_subsc_obj).update(
-    coupon_cnt=c_subsc_obj.subsc.base_cnt,
-  )
+  c_dists_obj = models.CouponDist.objects.filter(client_subsc=c_subsc_obj)
+  for c_dist in c_dists_obj:
+    # 配布数がゼロはスキップ
+    if c_dist.coupon_cnt == 0:
+      continue
+
+    # クーポン生成
+    models.Coupon.objects.create(
+      theme=c_dist.theme,
+      code=gen_code(),
+      max_uses=c_dist.coupon_cnt,
+      rest_cnt=c_dist.coupon_cnt,
+      valid_until=timezone.now() + relativedelta(months=1),
+    )
 
 
 # クーポン配分の更新
@@ -468,6 +483,31 @@ def coupon_dist(request):
   return Response({'detail': 'ok!'}, status=200)
 
 
+# クーポン配布設定リセット処理
+def _coupon_dist_reset(c_subsc_obj, client_obj):
+  if not c_subsc_obj:
+    return
+
+  # 1. 既存のクーポン配布設定を削除
+  models.CouponDist.objects.filter(client_subsc=c_subsc_obj).delete()
+
+  # 2. アクティブテーマを取得
+  themes = models.Theme.objects.filter(client=client_obj, is_active=True).order_by('id')
+
+  # 3. テーマ毎にクーポン配布設定生成
+  for i, theme in enumerate(themes):
+    if i == 0:
+      cnt = c_subsc_obj.subsc.base_cnt
+    else:
+      cnt = c_subsc_obj.subsc.add_cnt
+
+    models.CouponDist.objects.create(
+      client_subsc=c_subsc_obj,
+      theme=theme,
+      coupon_cnt=cnt,
+    )
+
+
 # サブスク登録変更ポータル
 @api_view(['POST'])
 def subsc_portal(request):
@@ -506,7 +546,7 @@ def theme_add(request):
     return Response({'error': 'bad request'}, status=401)
 
   # 2. サブスク情報確認
-  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).select_related('subsc').first()
   if not c_subsc_obj and not client_obj.is_free:
     return Response({'error': 'do not have a subscription'}, status=400)
 
@@ -580,6 +620,9 @@ def theme_add(request):
     options=["背中を押す", "そっと寄り添う", "問いを残す"],
   )
 
+  # 8. クーポン配分登録
+  _coupon_dist_reset(c_subsc_obj, client_obj)
+
   # レスポンス
   return Response({'theme_id': theme_obj.id}, status=200)
 
@@ -600,7 +643,7 @@ def theme_del(request):
   except json.JSONDecodeError:
     return Response({'error': 'bad request'}, status=400)
 
-  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).select_related('subsc').first()
   if not c_subsc_obj or client_obj.is_free:
     # サブスク情報がない場合は、不要アカウントとして処理終了
     return Response({'detail': 'ok!'}, status=200)
@@ -622,11 +665,15 @@ def theme_del(request):
   theme_id = body.get('theme')
   if not theme_id:
     return Response({'error': 'bad request'}, status=400)
-  updated = models.Theme.objects.filter(client=client_obj, id=theme_id).update(
+  theme_obj = models.Theme.objects.filter(client=client_obj, id=theme_id)
+  updated = theme_obj.update(
     is_active = False
   )
   if not updated:
     return Response({'error': 'bad request'}, status=400)
+
+  # 5. クーポン配分削除
+  _coupon_dist_reset(c_subsc_obj, client_obj)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
@@ -649,7 +696,7 @@ def theme_restore(request):
     return Response({'error': 'bad request'}, status=400)
 
   # 2. アクティブテーマ数を元にサブスク登録変更
-  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).first()
+  c_subsc_obj = models.ClientSubsc.objects.filter(client=client_obj, status=models.ClientSubsc.SUBSC_ACTIVE).select_related('subsc').first()
   if not c_subsc_obj or client_obj.is_free:
     # サブスク情報がない場合は、不要アカウントとして処理終了
     return Response({'detail': 'ok!'}, status=200)
@@ -677,6 +724,9 @@ def theme_restore(request):
     return Response({'error': 'bad request'}, status=400)
   theme_obj.is_active = True
   theme_obj.save(update_fields=['is_active'])
+
+  # 4. クーポン配分登録
+  _coupon_dist_reset(c_subsc_obj, client_obj)
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)
