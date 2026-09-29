@@ -11,7 +11,9 @@ urlpatterns = [
   path('themes', views.get_themes, name='テーマ一覧取得'),
 
   # 決済関係
-  path('payment', views_pay.payment, name='決済要求'),
+  path('payment/ehon', views_pay.payment_ehon, name='絵本購入'),
+  path('payment/ehon/coupon', views_pay.payment_ehon_coupon, name='絵本購入(クーポン)'),
+  path('payment/coupon', views_pay.payment_coupon, name='クーポン購入'),
   path('payment/callback', views_pay.callback, name='決済応答'),
 
   # クーポン関係
@@ -24,7 +26,6 @@ urlpatterns = [
   path('client/profile', views_client.profile, name='クライアント 情報更新'),
   path('client/login', views_client.login, name='クライアント ログイン'),
   path('client/themes', views_client.themes, name='クライアント テーマ一覧'),
-  path('client/coupon/purchase', views_client.coupon_payment, name='クライアント クーポン購入'),
   path('client/coupon_dist', views_client.coupon_dist, name='クライアント クーポン配布設定'),
   path('client/qs', views_client.question_entry, name='質問取得and更新'),
   path('client/theme/add', views_client.theme_add, name='テーマ追加'),

@@ -49,12 +49,14 @@ export const couponCheck = (body) =>
 export const couponUse = (body) =>
   request('/coupon/use', { method: 'POST', body: JSON.stringify(body) })
 
-// 106. POST /api/payment 決済要求
-export const payment = (body) =>
-  request('/payment', { method: 'POST', body: JSON.stringify(body) })
+// 106. POST /api/payment 絵本購入
+export const paymentEhon = (body) =>
+  request('/payment/ehon', { method: 'POST', body: JSON.stringify(body) })
 
 // 107. POST /api/payment/callback Stripe Webhook
-// 108. POST /api/payment/paypay_callback PayPay Webhook
+// 108. POST /api/payment 絵本購入(クーポン)
+export const paymentEhonCoupon = (body) =>
+  request('/payment/ehon/coupon', { method: 'POST', body: JSON.stringify(body) })
 
 // 109. GET /api/ehon/:token 絵本データ取得
 export const getEhon = (token) =>
@@ -110,9 +112,9 @@ export const subscCancel = () =>
 export const couponDist = (body) =>
   request('/client/coupon_dist', { method: 'PUT', body: JSON.stringify(body) })
 
-// 209. POST /api/client/coupon/purchase クーポン購入
-export const clientCoupon = (body) =>
-  request('/client/coupon/purchase', { method: 'POST', body: JSON.stringify(body) })
+// 209. POST /api/payment/coupon/ クーポン購入
+export const paymentCoupon = (body) =>
+  request('/payment/coupon', { method: 'POST', body: JSON.stringify(body) })
 
 // 210. GET /api/client/questions 質問一覧取得
 export const qsGet = (themeId) =>

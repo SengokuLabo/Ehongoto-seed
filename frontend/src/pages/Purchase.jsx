@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { payment } from '../api/client';
+import { paymentEhon, paymentEhonCoupon } from '../api/client';
 import { mockData } from '../mock';
 import { useFadeIn } from '../hooks/useFadeIn';
 
@@ -10,11 +10,11 @@ const mock = import.meta.env.DEV ? mockData : null
 export default function Purchase() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { result, face } = location.state || {}
+  const { result, face, logId } = location.state || {}
 
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState(null)
-  const [type, setType] = useState('pdf')     // タイプ(pdf, soft, hard)
+  const [type, setType] = useState(logId ? 'soft' : 'pdf')     // タイプ(pdf, soft, hard)
 
   const [fName, setFName] = useState('')
   const [eName, setEName] = useState('')
@@ -39,25 +39,45 @@ export default function Purchase() {
   const handlePayment = async () => {
     setPaying(true)
     setError(null)
-    try {
-      // result [ck_url]
-      const ckResult = await payment({
-        type: type,
-        client: result?.client,
-        theme: result?.theme,
-        buyer: {
-          name: `${fName} ${eName}`,
-          email: email,
-          phone: phone,
-          post: post,
-          address: address,
-          mail_ok: mailOk,
-        },
-        face: face,
-        spreads: spreads,
-        log_id: result?.log_id,
-      })
 
+    try {
+      let ckResult
+
+      if (logId) {
+        // クーポン購入後再購入
+        ckResult = await paymentEhonCoupon({
+          type: type,
+          buyer: {
+            name: `${fName} ${eName}`,
+            email: email,
+            phone: phone,
+            post: post,
+            address: address,
+            mail_ok: mailOk,
+          },
+          log_id: logId,
+        })
+
+      } else {
+        // 通常購入
+        ckResult = await paymentEhon({
+          type: type,
+          client: result?.client,
+          theme: result?.theme,
+          buyer: {
+            name: `${fName} ${eName}`,
+            email: email,
+            phone: phone,
+            post: post,
+            address: address,
+            mail_ok: mailOk,
+          },
+          face: face,
+          spreads: spreads,
+          log_id: result?.log_id,
+        })
+
+      }
       // 決済完了画面へ遷移
       window.location.href = ckResult.ck_url
     } catch (err) {
@@ -77,7 +97,7 @@ export default function Purchase() {
 
         {/* 購入タイプ */}
         <div className='pur_type fade_in'>
-          <label>
+          <label hidden={logId}>
             <input type='radio' name='type' onChange={() => setType('pdf')} checked={type==='pdf'} />
             PDF
           </label>

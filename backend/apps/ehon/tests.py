@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
-from .models import Client, Theme, Coupon, LkCoupon, FacePart, Colors, Image, Subsc, ClientSubsc, FaceGroupName, FaceGroup, PendingBook, Book
+from .models import Client, Theme, Coupon, LkCoupon, FacePart, Colors, Image, Subsc, ClientSubsc, FaceGroupName, FaceGroup, PendingBook, Book, AnswerLog, Buyer
 
 
 # =====================
@@ -71,6 +71,8 @@ class ClientAddTest(TestCase):
       'email': 'new@test.com',
       'password': 'password123',
       'client_name': '新規テスト社',
+      'label': 'テスト表示名',
+      'desc': 'テスト説明',
     }
 
   @patch('apps.ehon.views_client.send_mail')
@@ -197,15 +199,15 @@ class ClientThemesTest(BaseSetup):
 
 
 # =====================
-# 5. POST /api/client/coupon/purchase
+# 5. POST /api/payment/coupon
 # =====================
 class ClientCouponPurchaseTest(BaseSetup):
 
   def setUp(self):
     super().setUp()
-    self.url = '/api/client/coupon/purchase'
+    self.url = '/api/payment/coupon'
 
-  @patch('apps.ehon.views_client.stripe')
+  @patch('apps.ehon.views_pay.stripe')
   def test_ok(self, mock_stripe):
     mock_stripe.checkout.Session.create.return_value = MagicMock(url='https://checkout.stripe.com/test')
     self.api.force_login(self.user)
@@ -217,7 +219,7 @@ class ClientCouponPurchaseTest(BaseSetup):
     res = self.api.post(self.url, {'theme_id': self.theme.id, 'count': 3}, format='json')
     self.assertEqual(res.status_code, 401)
 
-  @patch('apps.ehon.views_client.stripe')
+  @patch('apps.ehon.views_pay.stripe')
   def test_other_client_theme(self, _):
     User.objects.create_user(username='other@test.com', email='other@test.com', password='pass')
     other_client = Client.objects.create(name='他社', email='other@test.com')
@@ -294,8 +296,8 @@ class CouponUseTest(BaseSetup):
   def test_ok(self, mock_mail):
     res = self.api.post(self.url, self.data, format='json')
     self.assertEqual(res.status_code, 200)
-    self.assertIn('dl_url', res.data)
-    mock_mail.assert_called_once()
+    self.assertIn('token', res.data)
+    self.assertEqual(mock_mail.call_count, 2)
 
   def test_no_lk_token(self):
     res = self.api.post(self.url, {**self.data, 'lk_token': ''}, format='json')
@@ -532,6 +534,98 @@ class GenerateTest(TestCase):
 
 
 # =====================
+# 109. GET /api/ehon/{token}
+# =====================
+class EhonDataTest(BaseSetup):
+
+  def setUp(self):
+    super().setUp()
+    self.buyer = Buyer.objects.create(name='テスト太郎', email='buyer@test.com')
+    self.book = Book.objects.create(
+      theme=self.theme,
+      buyer=self.buyer,
+      title='テスト絵本',
+      book_type='pdf',
+      status='coupon',
+      sp_pay_id='',
+      pdf_exp=timezone.now() + timedelta(days=30),
+    )
+    self.log = AnswerLog.objects.create(theme=self.theme, book=self.book)
+
+  def test_ok(self):
+    res = self.api.get(f'/api/ehon/{self.book.token}')
+    self.assertEqual(res.status_code, 200)
+    self.assertIn('log_id', res.data)
+    self.assertIn('price', res.data)
+    self.assertEqual(res.data['log_id'], self.log.id)
+
+  def test_not_found(self):
+    res = self.api.get(f'/api/ehon/{uuid.uuid4()}')
+    self.assertEqual(res.status_code, 404)
+
+  def test_expired(self):
+    self.book.pdf_exp = timezone.now() - timedelta(days=1)
+    self.book.save()
+    res = self.api.get(f'/api/ehon/{self.book.token}')
+    self.assertEqual(res.status_code, 403)
+
+  def test_no_log(self):
+    self.log.delete()
+    res = self.api.get(f'/api/ehon/{self.book.token}')
+    self.assertEqual(res.status_code, 200)
+    self.assertIsNone(res.data['log_id'])
+
+
+# =====================
+# 108. POST /api/payment/ehon/coupon
+# =====================
+class PaymentEhonCouponTest(BaseSetup):
+
+  def setUp(self):
+    super().setUp()
+    self.url = '/api/payment/ehon/coupon'
+    self.buyer = Buyer.objects.create(name='テスト太郎', email='buyer@test.com')
+    self.book = Book.objects.create(
+      theme=self.theme,
+      buyer=self.buyer,
+      title='テスト絵本',
+      book_type='pdf',
+      status='coupon',
+      sp_pay_id='',
+      pdf_exp=timezone.now() + timedelta(days=30),
+    )
+    self.log = AnswerLog.objects.create(theme=self.theme, book=self.book)
+    self.data = {
+      'type': 'soft',
+      'log_id': self.log.id,
+      'buyer': {'name': 'テスト太郎', 'email': 'buyer@test.com'},
+    }
+
+  @patch('apps.ehon.views_pay.stripe')
+  def test_ok(self, mock_stripe):
+    mock_stripe.checkout.Session.create.return_value = MagicMock(url='https://checkout.stripe.com/test')
+    res = self.api.post(self.url, self.data, format='json')
+    self.assertEqual(res.status_code, 200)
+    self.assertIn('ck_url', res.data)
+
+  def test_no_log_id(self):
+    res = self.api.post(self.url, {**self.data, 'log_id': None}, format='json')
+    self.assertEqual(res.status_code, 400)
+
+  def test_invalid_log_id(self):
+    res = self.api.post(self.url, {**self.data, 'log_id': 9999}, format='json')
+    self.assertEqual(res.status_code, 400)
+
+  def test_no_buyer(self):
+    res = self.api.post(self.url, {**self.data, 'buyer': None}, format='json')
+    self.assertEqual(res.status_code, 400)
+
+  def test_invalid_type(self):
+    res = self.api.post(self.url, {**self.data, 'type': 'invalid'}, format='json')
+    self.assertEqual(res.status_code, 400)
+
+
+# =====================
 # 13. POST /api/payment/callback（絵本購入）
 # =====================
 class CallbackTest(TestCase):
@@ -598,3 +692,36 @@ class CallbackTest(TestCase):
     res = self.api.post(self.url, data='{}', content_type='application/json', HTTP_STRIPE_SIGNATURE='sig')
     self.assertEqual(res.status_code, 200)
     self.assertTrue(Book.objects.filter(title='テスト絵本顔なし', hair__isnull=True).exists())
+
+  @patch.dict(os.environ, {'FRONT_URL': 'http://localhost'})
+  @patch('apps.ehon.views.send_mail')
+  @patch('apps.ehon.views_pay.stripe')
+  def test_book_coupon(self, mock_stripe, _):
+    mock_stripe.error.SignatureVerificationError = stripe_mod.error.SignatureVerificationError
+    buyer = Buyer.objects.create(name='テスト太郎', email='buyer@test.com')
+    book = Book.objects.create(
+      theme=self.theme_no_face,
+      buyer=buyer,
+      title='クーポン絵本',
+      book_type='pdf',
+      status='coupon',
+      sp_pay_id='',
+      pdf_exp=timezone.now() + timedelta(days=30),
+    )
+    PendingBook.objects.create(
+      token=book.token,
+      data={'type': 'soft', 'theme_id': self.theme_no_face.id, 'price': 3000, 'buyer': self.buyer},
+    )
+    event = {
+      'type': 'checkout.session.completed',
+      'data': {'object': {
+        'id': 'pi_coupon123',
+        'metadata': {'type': 'book_coupon', 'token': str(book.token)},
+      }}
+    }
+    mock_stripe.Webhook.construct_event.return_value = event
+    res = self.api.post(self.url, data='{}', content_type='application/json', HTTP_STRIPE_SIGNATURE='sig')
+    self.assertEqual(res.status_code, 200)
+    book.refresh_from_db()
+    self.assertEqual(book.book_type, 'soft')
+    self.assertEqual(book.sp_pay_id, 'pi_coupon123')

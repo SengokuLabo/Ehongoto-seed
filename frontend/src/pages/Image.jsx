@@ -71,7 +71,7 @@ export default function Image() {
       // クーポン使用時
       try {
         const res = await couponUse({ lk_token: lkToken, face, spreads, log_id: result?.log_id })
-        navigate('/preview', {state: { ...location.state, result: { ...result, spreads }, lkToken, dlUrl: res.dl_url }})
+        navigate(`/ehon/${res.token}`)
       } catch (err) {
         // エラー時は再度クーポン入力
         navigate('/coupon', {state: { ...location.state, result: {...result, spreads} } })

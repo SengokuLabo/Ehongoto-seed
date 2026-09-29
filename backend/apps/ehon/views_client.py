@@ -213,50 +213,6 @@ def profile(request):
   return Response({'detail': 'ok!'}, status=200)
 
 
-# クライアント クーポン購入 決済要求
-@api_view(['POST'])
-def coupon_payment(request):
-  # 1. バリデーション
-  if not request.user.is_authenticated:
-    return Response({'error': 'bad request'}, status=401)
-
-  try:
-    body = json.loads(request.body)
-  except json.JSONDecodeError:
-    return Response({'error': 'bad request'}, status=400)
-
-  theme_id = body.get('theme_id')
-  client_obj = models.Client.objects.filter(user=request.user).first()
-  count = body.get('count')
-  if not theme_id or not client_obj or not count:
-    return Response({'error': 'bad request'}, status=400)
-
-  theme_obj = models.Theme.objects.filter(id=theme_id, client=client_obj).first()
-  if not theme_obj:
-    return Response({'error': 'bad request'}, status=400)
-
-  # 2. Stripe Checkout Session 発行
-  session = stripe.checkout.Session.create(
-    payment_method_types=['card'],
-    line_items=[{
-      'price_data': {
-        'currency': 'jpy',
-        'product_data': {'name': theme_obj.name},
-        'unit_amount': theme_obj.price_pdf * count,
-      },
-      'quantity': 1,
-    }],
-    mode='payment',
-    success_url=f"{os.environ.get('FRONT_URL')}/client",
-    cancel_url=f"{os.environ.get('FRONT_URL')}/coupon",
-    metadata={'type': 'coupon', 'theme_id': str(theme_id), 'count': str(count)},
-    customer_email=theme_obj.client.email,
-  )
-
-  # 3. クーポン画面にリダイレクト
-  return Response({'ck_url': session.url})
-
-
 # クーポン購入後処理
 def _coupon_purchase(session_obj):
   # 1. テーマ取得

@@ -31,6 +31,7 @@ export default function Preview() {
   const { token } = useParams()
   const [apiData, setApiData] = useState(null)
   const [apiErr, setApiErr] = useState(null)
+  const [logId, setLogId] = useState(null)
 
   const spreads = result?.spreads ?? mock?.spreads ?? []
   const faceParts = result?.face_parts ?? mock?.face_parts ?? []
@@ -65,6 +66,7 @@ export default function Preview() {
     if (apiData) {
       setResult(apiData)
       setFace(apiData.face)
+      setLogId(apiData.log_id)
     }
   }, [apiData])
 
@@ -104,7 +106,7 @@ export default function Preview() {
 
   // Purchaseへ遷移
   const handleNext = () => {
-    navigate('/purchase', { state: { ...location.state, } })
+    navigate('/purchase', { state: { ...location.state, result, face, logId } })
   }
 
   // Imageへ戻る
@@ -173,7 +175,14 @@ export default function Preview() {
         {isPreview &&
           <div className='btns_trans fade_in'>
             <button className='btn_back' onClick={handlePre}>戻る</button>
-            <button className='btn_driv' onClick={handleNext} hidden={!isPreview}>購入</button>
+            <button className='btn_driv' onClick={handleNext}>購入</button>
+          </div>
+        }
+
+        {logId &&
+          <div className='btns_trans fade_in'>
+            <div />
+            <button className='btn_driv' onClick={handleNext}>製本購入</button>
           </div>
         }
 

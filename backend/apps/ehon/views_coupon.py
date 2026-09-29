@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
-from urllib.parse import urlencode
 from apps.common.auth import send_mail
 from apps.common import mail_temp
 from . import models
@@ -148,8 +147,7 @@ def coupon_use(request):
   lk_coupon_obj.delete()
 
   # 5. ダウンロードメール
-  home = urlencode({'client': book_obj.theme.client.name, 'theme': book_obj.theme.name})
-  download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}?{home}"
+  download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}"
   type_label = f"{dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')} (クーポン利用)"
   body_text, body_html = mail_temp.pdf_purchase(book_obj, download_url)
   # To:購入者
@@ -172,4 +170,4 @@ def coupon_use(request):
   )
 
   # 6. レスポンス
-  return Response({'dl_url': download_url}, status=200)
+  return Response({'token': book_obj.token}, status=200)

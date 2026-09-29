@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { clientCoupon } from '../api/client'
+import { paymentCoupon } from '../api/client'
 import { useFadeIn } from '../hooks/useFadeIn'
 
 // クーポン購入フォーム
@@ -18,7 +18,7 @@ export default function ClientCoupon() {
 
   const handleNext = async() => {
     try {
-      const res = await clientCoupon({ theme_id: theme, count: count })
+      const res = await paymentCoupon({ theme_id: theme, count: count })
       window.location.href = res.ck_url
     } catch (err) {
       setResErr(true)
@@ -42,16 +42,13 @@ export default function ClientCoupon() {
 
         {/* 購入確認 */}
         <label className='input_check fade_in'>
-          <input
-            type='checkbox'
-            onChange={e => setPayCheck(e.target.checked)}
-          />
+          <input type='checkbox' onChange={e => setPayCheck(e.target.checked)} />
           <span className='link' onClick={e => { e.preventDefault(); setIsModal(true) }}>購入確認</span>に同意する
         </label>
         <p className='fade_in'>※有効期限は90日間です。</p>
 
         <div className='btns fade_in'>
-          <button className='btn_back' onClick={() => navigate(-1)}>戻る</button>
+          <button className='btn_back' onClick={() => navigate('/client')}>戻る</button>
           <button className='btn_driv' onClick={handleNext} disabled={count<=0 || !payCheck}>購入</button>
         </div>
 

@@ -27,7 +27,7 @@ export default function Coupon() {
           spreads: result?.spreads,
           log_id: result?.log_id
         })
-        navigate('/preview', {state: { ...location.state, lkToken: ckResult.lk_token, dlUrl: useResult.dl_url } })
+        navigate(`/ehon/${useResult.token}`)
       } else {
         // 初期入力時
         navigate(`/?client=${ckResult.client}&theme=${ckResult.theme}`, { state: { lkToken: ckResult.lk_token } })

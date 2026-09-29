@@ -4,7 +4,6 @@ from django.conf import settings
 from datetime import timedelta
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from urllib.parse import urlencode
 from apps.common.auth import send_mail
 from apps.common import mail_temp
 from . import models
@@ -14,6 +13,7 @@ from .ai import generate_story
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 MAIL_SUBJECT_PDF = 'えほんごとのたね |ダウンロードリンクのご案内'
 MAIL_SUBJECT_PRINT = 'えほんごとのたね |製本受付のご案内'
+
 
 # テーマ毎の質問取得
 @api_view(['GET'])
@@ -56,6 +56,7 @@ def get_question(request):
     'styles': list(style_obj.values('key', 'label', 'options')),
   }, status=200)
 
+
 # えほんごとのたね作成
 @api_view(['POST'])
 def generate(request):
@@ -86,7 +87,6 @@ def generate(request):
   )
 
   # 2. AI文章生成（anthropic）※リトライ1回
-  # result {"spreads": [{"sp_num": 1, "text1": "...", "text2": "..."}, ...]}
   result = generate_story(theme_obj, answers, styles)
   if not result:
     return Response({'error': 'server error'}, status=500)
@@ -139,6 +139,7 @@ def generate(request):
     'price': price,
     'title_style': theme_obj.title_style,
   }, status=200)
+
 
 # 絵本購入後処理
 def _book_purchase(session_obj):
@@ -215,8 +216,89 @@ def _book_purchase(session_obj):
   pending_obj.delete()
 
   # 3. SESメール送信
-  home = urlencode({'client': book_obj.theme.client.name, 'theme': book_obj.theme.name})
-  download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}?{home}"
+  download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}"
+  type_label = dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')
+  if data.get('type') == models.Book.TYPE_PDF:
+    # PDF
+    body_text, body_html = mail_temp.pdf_purchase(book_obj, download_url)
+    # To:購入者
+    send_mail(
+      to=buyer_obj.email,
+      subject=MAIL_SUBJECT_PDF,
+      body_text=body_text,
+      body_html=body_html,
+      service_name=book_obj.theme.client.name,
+      reply_to=book_obj.theme.client.email,
+    )
+  else:
+    # 製本
+    body_text, body_html = mail_temp.print_purchase(buyer_obj, book_obj, download_url)
+    # To:購入者
+    send_mail(
+      to=buyer_obj.email,
+      subject=MAIL_SUBJECT_PRINT,
+      body_text=body_text,
+      body_html=body_html,
+      service_name=book_obj.theme.client.name,
+      reply_to=book_obj.theme.client.email,
+    )
+
+  # To:クライアント
+  send_mail(
+    to=book_obj.theme.client.email,
+    subject='えほんごとのたね | ご購入通知',
+    body_text=mail_temp.notify_client(buyer_obj, book_obj, type_label),
+    body_html=None,
+    service_name='えほんごとのたね',
+    reply_to=os.environ.get('ADMIN_EMAIL'),
+  )
+  # To:管理者
+  send_mail(
+    to=os.environ.get('ADMIN_EMAIL'),
+    subject=MAIL_SUBJECT_PRINT,
+    body_text=mail_temp.notify_admin(buyer_obj, book_obj, type_label),
+    body_html='',
+    service_name=book_obj.theme.client.name,
+    reply_to=book_obj.theme.client.email,
+  )
+
+
+# 絵本購入後処理(クーポン使用後)
+def _book_coupon_purchase(session_obj):
+  # 1. pendingデータ取得
+  sp_pay_id = session_obj.get('id', '')
+  token = session_obj.get('metadata', {}).get('token', '')
+  pending_obj = models.PendingBook.objects.filter(token=token).first()
+  book_obj = models.Book.objects.filter(token=token).first()
+  if not pending_obj or not book_obj:
+    return
+  data = pending_obj.data
+
+  # 2. DB保存
+  # 購入者登録
+  buyer_data = data.get('buyer')
+  buyer_obj, _ = models.Buyer.objects.get_or_create(
+    email=buyer_data.get('email'),
+    defaults={
+      'name': buyer_data.get('name', ''),
+      'phone': buyer_data.get('phone', ''),
+      'post': buyer_data.get('post', ''),
+      'address': buyer_data.get('address', ''),
+      'mail_ok': buyer_data.get('mail_ok', False),
+    }
+  )
+
+  # Book更新
+  book_obj.buyer = buyer_obj
+  book_obj.book_type = data.get('type')
+  book_obj.sp_pay_id = sp_pay_id
+  book_obj.save(update_fields=['buyer', 'book_type', 'sp_pay_id'])
+
+  # pendingデータ削除
+  pending_obj.delete()
+
+  # 3. SESメール送信
+  download_url = f"{os.environ.get('FRONT_URL')}/ehon/{book_obj.token}"
   type_label = dict(models.Book.BOOK_TYPE).get(book_obj.book_type, '')
   if data.get('type') == models.Book.TYPE_PDF:
     # PDF
@@ -268,7 +350,7 @@ def _book_purchase(session_obj):
 def ehon_data(request, token):
   # 購入済み絵本データ取得
   book_obj = models.Book.objects.select_related(
-      'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color'
+      'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color', 'theme',
     ).filter(token=token).first()
   if not book_obj:
     return Response({'error': 'book not found'}, status=404)
@@ -278,6 +360,14 @@ def ehon_data(request, token):
     return Response({'error': 'pdf expired'}, status=403)
 
   spread_obj = models.BookPage.objects.filter(book=book_obj).order_by('spread').select_related('img')
+
+  log_obj = models.AnswerLog.objects.filter(book=book_obj).first()
+
+  price = {
+    'pdf': book_obj.theme.price_pdf,
+    'soft': book_obj.theme.price_soft,
+    'hard': book_obj.theme.price_hard,
+  }
 
   return Response({
     'title': book_obj.title,
@@ -310,6 +400,8 @@ def ehon_data(request, token):
         },
     } for sp in spread_obj],
     'title_style': book_obj.theme.title_style,
+    'log_id': log_obj.id if log_obj else None,
+    'price': price,
   }, status=200)
 
 
