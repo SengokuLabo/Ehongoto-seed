@@ -19,6 +19,8 @@ import ClientCoupon from './pages/ClientCoupon'
 import Share from './pages/Share'
 import ClientQs from './pages/ClientQs'
 import ClinetTheme from './pages/ClientTheme'
+import ClientImg from './pages/ClientImg'
+import ClientMask from './pages/ClientMask'
 import './reset.scss'
 import './app.scss'
 
@@ -70,6 +72,10 @@ export default function App() {
           <Route path='/client/qs' element={<ClientQs />} />
           {/* クライアント テーマ追加 */}
           <Route path='/client/theme' element={<ClinetTheme />} />
+          {/* クライアント テーマ用イラスト登録 */}
+          <Route path='/client/img' element={<ClientImg />} />
+          {/* クライアント テーマ用マスク登録 */}
+          <Route path='/client/mask' element={<ClientMask />} />
 
         </Routes>
       </div>

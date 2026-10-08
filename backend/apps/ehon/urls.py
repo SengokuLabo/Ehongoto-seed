@@ -34,6 +34,11 @@ urlpatterns = [
   path('client/logo', views_client.client_logo, name='クライアントロゴ登録'),
   path('client/theme/icon', views_client.theme_icon, name='テーマアイコン登録'),
 
+  path('client/img', views_client.client_img, name='テーマ用イラスト登録'),
+  path('client/imgs', views_client.client_imgs, name='テーマ用イラスト一覧取得'),
+  path('client/mask', views_client.client_mask, name='マスク登録'),
+  path('client/theme/imgs', views_client.theme_img, name='テーマ用イラスト紐付け'),
+
   # サブスク関係
   path('client/subsc/plans', views_client.subsc_plan, name='サブスク一覧取得'),
   path('client/subsc/signup', views_client.subsc_signup, name='サブスク登録'),

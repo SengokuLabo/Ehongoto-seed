@@ -235,7 +235,9 @@ export default function Client() {
         {/* テーマ情報 */}
         <div className='client_themes'>
           <h2 className='fade_in'>テーマ</h2>
-          <button className='btn_dl fade_in' onClick={() => navigate('/client/theme', {state: {isFree: isFree || themes.filter(t => t.is_active).length === 0}})}>新規テーマ追加</button>
+          <button className='btn_dl fade_in' onClick={() =>
+            navigate('/client/theme', { state: { isFree: isFree || themes.filter(t => t.is_active).length === 0 } })}>新規テーマ追加</button>
+          <button className='btn_dl fade_in' onClick={() => navigate('/client/img')} >イラスト設定</button>
           {themes.map((t, i) => (
             <div key={t.id} className='theme_list'>
               <div className='client_head fade_in'>
@@ -300,9 +302,7 @@ export default function Client() {
           />}
 
         {/* クーポン分配確定 */}
-        {resDist &&
-          <Modal onClose={() => setResDist(null)} title='クーポン分配確定' cont={<>{resDist}</>}
-          />}
+        {resDist && <Modal onClose={() => setResDist(null)} title='クーポン分配確定' cont={<>{resDist}</>} />}
 
         {/* 解約確認 */}
         {isCancel &&

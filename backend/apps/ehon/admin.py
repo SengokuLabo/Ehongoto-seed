@@ -118,7 +118,7 @@ class ThemeAdmin(admin.ModelAdmin):
     'client',
     'name',
   )
-  ordering = ('client', 'name')
+  ordering = ('client', 'id')
   list_per_page = 30
   def client_name(self, obj):
     return obj.client.name if obj.client else ''

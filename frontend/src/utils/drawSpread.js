@@ -131,8 +131,8 @@ export async function drawSpread(canvas, spread, face, faceParts, isPreview, lay
 
   // イラストをマスクを読み込み
   const img = spread?.img
-  const maskPath = img?.img_path?.replace(/(\.[^.]+)$/, '_mask.png')
-  const maskUrl = import.meta.env.DEV ? `${maskPath}?t=${Date.now()}` : maskPath
+  const maskPath = img?.mask_path ?? img?.img_path?.replace(/(\.[^.]+)$/, '_mask.png')
+  const maskUrl = (img?.mask_path || !import.meta.env.DEV) ? maskPath : `${maskPath}?t=${Date.now()}`
   const [bgImg, maskImg] = await Promise.all([
     // 見開き1面に対して1イラストなので左ページから取得
     img?.img_path ? loadImage(img.img_path) : Promise.resolve(null),

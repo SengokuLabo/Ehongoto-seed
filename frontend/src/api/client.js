@@ -124,9 +124,21 @@ export const qsGet = (themeId) =>
 export const qsEntry = (body) =>
   request('/client/qs', { method: 'PUT', body: JSON.stringify(body) })
 
-// 212. POST /api/client/img イメージ登録
+// 212. POST /api/client/img イラスト登録
 export const imgUpload = (formData) =>
   requestImg('/client/img', { method: 'POST', body: formData })
+
+// 221. GET /api/client/imgs イラスト一覧取得
+export const imgGet = () =>
+  request('/client/imgs')
+
+// 222. POST /api/client/mask マスク画像登録
+export const maskUpload = (formData) =>
+  requestImg('/client/mask', { method: 'POST', body: formData })
+
+// 223. PUT /api/client/theme/imgs テーマイラスト紐付け登録
+export const themeImgs = (body) =>
+  request('/client/theme/imgs', { method: 'PUT', body: JSON.stringify(body) })
 
 // 213. GET /api/client/stats ファネル統計
 export const clientStats = () =>
