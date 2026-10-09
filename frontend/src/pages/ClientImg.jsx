@@ -37,14 +37,14 @@ export default function ClientImg() {
       fd.append('img', img)
       fd.append('themes', JSON.stringify(selTheme))
       const res = await imgUpload(fd)
-      setImgs(prev => [...prev, {
+      setImgs(prev => [{
         id: res.id,
         path: res.path,
         name: img.name,
         angle: 0, size: 0, ox: 0, tilt: 0,
         mask: false,
         themes: selTheme,
-      }])
+      }, ...prev])
       setUpImg(null)
       setSelTheme([])
     } catch (err) {
@@ -82,7 +82,10 @@ export default function ClientImg() {
   return (
     <section className='client_img'>
       <div className='section_cont'>
-        <h2 className='fade_in'>イラスト管理</h2>
+        <div className='btns_back'>
+          <h2 className='fade_in'>イラスト管理</h2>
+          <button className='btn_back fade_in' onClick={() => navigate('/client')}>戻る</button>
+        </div>
 
         {/* ファイルアップロード */}
         <label className='img_upload fade_in'>

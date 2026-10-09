@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Max
 from django.shortcuts import redirect
 from django.contrib.auth import authenticate, login as auth_login
 from django.conf import settings
@@ -788,7 +788,8 @@ def client_imgs(request):
     return Response({'error': 'bad request'}, status=401)
 
   # 2. イラスト一覧取得
-  imgs = models.Image.objects.filter(client=client_obj).prefetch_related('themeimg_set__theme').order_by('id')
+  imgs = models.Image.objects.filter(client=client_obj).prefetch_related('themeimg_set__theme')\
+    .annotate(max_theme=Max('themeimg__theme_id')).order_by('-max_theme', 'id')
   themes = models.Theme.objects.filter(client=client_obj, is_active=True).select_related('face_group')
   fg_ids = [t.face_group_id for t in themes if t.face_group_id]
   fgs = models.FaceGroup.objects.filter(group_id__in=fg_ids).select_related('part').order_by('part__id')

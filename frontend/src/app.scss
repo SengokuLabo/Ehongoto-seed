@@ -121,6 +121,12 @@ button {
   margin: 3rem auto;
 }
 
+.btns_back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .btn_login {
   @include btn_ehon(#A09078);
   margin-right: 1rem;
