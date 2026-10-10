@@ -178,3 +178,8 @@ export const themeIcon = (theme, file) => {
 // 220. PATCH /api/client/profile クライアント情報更新
 export const clientProfile = (body) =>
   request('/client/profile', { method: 'PATCH', body: JSON.stringify(body) })
+
+// 224. POST /api/client/theme/copy テーマ複製
+export const themeCopy = (body) =>
+  request('/client/theme/copy', { method: 'POST', body: JSON.stringify(body) })
+

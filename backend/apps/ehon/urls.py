@@ -33,6 +33,7 @@ urlpatterns = [
   path('client/theme/restore', views_client.theme_restore, name='テーマ復元'),
   path('client/logo', views_client.client_logo, name='クライアントロゴ登録'),
   path('client/theme/icon', views_client.theme_icon, name='テーマアイコン登録'),
+  path('client/theme/copy', views_client.theme_copy, name='テーマ複製仮登録'),
 
   path('client/img', views_client.client_img, name='テーマ用イラスト登録'),
   path('client/imgs', views_client.client_imgs, name='テーマ用イラスト一覧取得'),

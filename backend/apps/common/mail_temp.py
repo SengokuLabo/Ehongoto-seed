@@ -240,3 +240,22 @@ def notify_admin(buyer_obj, book_obj, type_label):
     {bind_url}
   ''' + SIGNATURE_TEXT
   return text
+
+
+# テーマ複製通知
+def notify_theme_copy(theme_obj, tg_theme_obj):
+  login_url = f"ログインURL：{os.environ.get('FRONT_URL')}/client"
+  text = f'''
+    {tg_theme_obj.client.name} 様
+
+    テーマ複製手続きがありました。
+    ・テーマ名：{theme_obj.name}
+    ・複製元：{theme_obj.client.name} 様
+
+    該当テーマは、仮登録状態です。
+    ダッシュボードから有効化をお願いします。
+    {login_url}
+
+    ※身に覚えがない場合は、ご連絡ください。
+  ''' + SIGNATURE_TEXT
+  return text

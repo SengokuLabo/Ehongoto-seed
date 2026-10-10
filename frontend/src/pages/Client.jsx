@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { clientProfile, clientThemes, couponDist, subscCancel, subscPortal, themeDel, themeIcon, themeRestore } from "../api/client"
+import { clientProfile, clientThemes, couponDist, subscCancel, subscPortal, themeCopy, themeDel, themeIcon, themeRestore } from "../api/client"
 import { useNavigate } from "react-router-dom"
 import Modal from '../components/Modal'
 import { useFadeIn } from '../hooks/useFadeIn'
@@ -32,6 +32,10 @@ export default function Client() {
   const [tSwich, setTSwich] = useState(null)        // テーマ切替
 
   const [logo, setLogo] = useState(null)            // ロゴファイル
+
+  const [copyTheme, setCopyTheme] = useState(null)  // コピー対象テーマ
+  const [tgClient, setTgClient] = useState('')      // コピーさきクライアント
+  const [resCopy, setResCopy] = useState(null)      // テーマコピーモーダル
 
   useEffect(() => {
     (async () => {
@@ -137,6 +141,18 @@ export default function Client() {
   const handleIcon = async (id, file) => {
     if (!file) return
     await themeIcon(id, file)
+  }
+
+  // テーマ複製
+  const handleCopy = async () => {
+    try {
+      await themeCopy({ theme: copyTheme.id, tg_client: tgClient })
+      setCopyTheme(null)
+      setTgClient('')
+      setResCopy(<p>テーマを複製しました<br />複製先クライアントにて「有効化」手続きが必要です</p>)
+    } catch (e) {
+      setResCopy(e.error)
+    }
   }
 
   // フェードインアニメーション
@@ -253,8 +269,11 @@ export default function Client() {
 
               <div className='client_head fade_in'>
 
+                {/* 質問設定 */}
                 <button className='btn_pre' onClick={() => navigate('/client/qs', {state: {theme: t.id, themeNm: t.name}})}>質問設定</button>
-
+                {/* テーマ複製 */}
+                {t.origin === null && <button className='btn_back' onClick={() => setCopyTheme({ id: t.id, name: t.name })}>テーマ複製</button> }
+                {/* クーポン購入 */}
                 <div className='theme_head_price'>
                   <button className='btn_driv' onClick={() => navigate('/client/coupon', { state: { theme: t.id, themeNm: t.name, pdf: t.pdf } })}>
                     クーポン購入
@@ -348,6 +367,24 @@ export default function Client() {
 
         {/* テーマ利用切替結果 */}
         {resSubsc && <Modal title='テーマ利用切替' onClose={() => setResSubsc(null)} cont={resSubsc} />}
+
+        {/* テーマ複製 */}
+        {copyTheme &&
+          <Modal title='テーマ複製' onClose={() => { setCopyTheme(null); setTgClient('') }}
+          cont={<>
+            <p>「{copyTheme.name}」を複製します</p>
+            <p>複製先クライアント名を入力してください</p>
+            <input type='text' value={tgClient} onChange={e => setTgClient(e.target.value)} />
+            <div className='btns'>
+              <button className='btn_pre' onClick={() => { setCopyTheme(null); setTgClient('') }}>キャンセル</button>
+              <button className='btn_nxt' onClick={handleCopy} disabled={!tgClient}>複製</button>
+            </div>
+          </>}
+        />}
+
+        {/* テーマ複製結果 */}
+        {resCopy && <Modal title='テーマ複製結果' onClose={() => setResCopy(null)} cont={resCopy} />}
+
       </div>
     </section>
   )

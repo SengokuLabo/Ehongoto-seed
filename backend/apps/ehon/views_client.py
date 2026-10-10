@@ -11,7 +11,7 @@ from django.conf import settings
 from dateutil.relativedelta import relativedelta
 from . import models
 from apps.common.auth import send_mail
-from apps.common.mail_temp import client_add, client_verify, client_coupon
+from apps.common import mail_temp
 from .imgs import img_upload
 
 # クーポンコード発行
@@ -64,7 +64,7 @@ def add(request):
 
   # 3. 確認メール送信
   apply_url = f"{os.environ.get('FRONT_URL')}/api/client/verify/{client_obj.chk_token}"
-  body_text = client_add(name, apply_url)
+  body_text = mail_temp.client_add(name, apply_url)
   send_mail(
     to=email,
     subject=f'【えほんごとのたね】 {name}様',
@@ -94,7 +94,7 @@ def verify(request, token):
   client_obj.user.save()
 
   # 3. 管理者へメール
-  body_text = client_verify(client_obj.name, client_obj.email, timezone.now())
+  body_text = mail_temp.client_verify(client_obj.name, client_obj.email, timezone.now())
   send_mail(
     to=os.environ.get('ADMIN_EMAIL'),
     subject='【えほんごとのたね】 クライアント本登録対応',
@@ -134,7 +134,7 @@ def login(request):
   return Response({'detail': 'ok!'}, status=200)
 
 
-# クライアント テーマ情報取得
+# 204. クライアント テーマ情報取得
 @api_view(['GET'])
 def themes(request):
   # 1. バリデーション
@@ -168,6 +168,7 @@ def themes(request):
     'year': t.year,
     'icon': t.icon,
     'is_active': t.is_active,
+    'origin': t.origin_theme_id,
     'face': t.face_group_id is not None,
     'pdf': t.price_pdf,
     'coupon_cnt': c_dist.get(t.id),
@@ -238,7 +239,7 @@ def _coupon_purchase(session_obj):
   )
 
   # 3. 運営にメール
-  body_text = client_coupon(theme_obj.client.name, theme_obj.client.email, theme_obj.name)
+  body_text = mail_temp.client_coupon(theme_obj.client.name, theme_obj.client.email, theme_obj.name)
   send_mail(
     to=os.environ.get('ADMIN_EMAIL'),
     subject='【えほんごとのたね】 クライアント クーポン購入',
@@ -790,7 +791,7 @@ def client_imgs(request):
   # 2. イラスト一覧取得
   imgs = models.Image.objects.filter(client=client_obj).prefetch_related('themeimg_set__theme')\
     .annotate(max_theme=Max('themeimg__theme_id')).order_by('-max_theme', 'id')
-  themes = models.Theme.objects.filter(client=client_obj, is_active=True).select_related('face_group')
+  themes = models.Theme.objects.filter(client=client_obj, is_active=True, origin_theme__isnull=True).select_related('face_group')
   fg_ids = [t.face_group_id for t in themes if t.face_group_id]
   fgs = models.FaceGroup.objects.filter(group_id__in=fg_ids).select_related('part').order_by('part__id')
   parts = {}
@@ -982,6 +983,93 @@ def theme_icon(request):
   # 3. テーマ情報更新
   theme_obj.icon = file_name
   theme_obj.save()
+
+  # レスポンス
+  return Response({'detail': 'ok!'}, status=200)
+
+
+# 224. テーマ複製
+@api_view(['POST'])
+def theme_copy(request):
+  # 1. セッション確認
+  if not request.user.is_authenticated:
+    return Response({'error': 'bad request'}, status=401)
+
+  client_obj = models.Client.objects.filter(user=request.user).first()
+  if not client_obj:
+    return Response({'error': 'bad request'}, status=401)
+
+  try:
+    body = json.loads(request.body)
+  except json.JSONDecodeError:
+    return Response({'error': 'bad request'}, status=400)
+
+  # 2. バリデーション
+  theme_obj = models.Theme.objects.filter(id=body.get('theme')).first()
+  if not theme_obj:
+    return Response({'error': 'bad request'}, status=400)
+  tg_client_obj = models.Client.objects.filter(name=body.get('tg_client')).first()
+  if not tg_client_obj:
+    return Response({'error': 'the client does not exist'}, status=400)
+
+  if theme_obj.client != client_obj:
+    return Response({'error': 'bad request'}, status=403)
+
+  if theme_obj.origin_theme is not None:
+    return Response({'error': 'non copyable theme'}, status=409)
+
+  if models.Theme.objects.filter(client=tg_client_obj, name=theme_obj.name).exists():
+    return Response({'error': 'theme with the same name already'}, status=409)
+
+  # 3. DB複製
+  tg_theme_obj = models.Theme.objects.create(
+    client=tg_client_obj,
+    name=theme_obj.name,
+    year=theme_obj.year,
+    label=theme_obj.label,
+    icon=theme_obj.icon,
+    desc=theme_obj.desc,
+    prompt=theme_obj.prompt,
+    price_pdf=theme_obj.price_pdf,
+    price_soft=theme_obj.price_soft,
+    price_hard=theme_obj.price_hard,
+    face_group=theme_obj.face_group,
+    title_style=theme_obj.title_style,
+    origin_theme=theme_obj,
+    is_active=False,
+  )
+
+  # Question
+  qs_obj = models.Question.objects.filter(theme=theme_obj).order_by('sort')
+  models.Question.objects.bulk_create([
+    models.Question(theme=tg_theme_obj, sort=q.sort, chapter=q.chapter, text=q.text)
+    for q in qs_obj
+  ])
+
+  # Style
+  styles_obj = models.Style.objects.filter(theme=theme_obj)
+  models.Style.objects.bulk_create([
+    models.Style(theme=tg_theme_obj, key=s.key, label=s.label, options=s.options)
+    for s in styles_obj
+  ])
+
+  # ThemeImg
+  timgs_obj = models.ThemeImg.objects.filter(theme=theme_obj)
+  models.ThemeImg.objects.bulk_create([
+    models.ThemeImg(theme=tg_theme_obj, img=ti.img)
+    for ti in timgs_obj
+  ])
+
+  # 4. 複製先クライアントへメール
+  body_text = mail_temp.notify_theme_copy(theme_obj, tg_theme_obj)
+  send_mail(
+    to=tg_client_obj.email,
+    subject='【えほんごとのたね】 テーマ複製 仮登録通知',
+    body_text=body_text,
+    body_html=None,
+    service_name='えほんごとのたね',
+    reply_to=os.environ.get('ADMIN_EMAIL')
+  )
 
   # レスポンス
   return Response({'detail': 'ok!'}, status=200)

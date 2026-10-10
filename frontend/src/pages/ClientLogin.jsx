@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { clientLogin } from "../api/client"
 import { useFadeIn } from '../hooks/useFadeIn'
@@ -8,17 +8,22 @@ export default function ClientLogin() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
-  const [resErr, setResErr] = useState(false)
+  const [resErr, setResErr] = useState(null)
   const isOK = email && pass
 
   const handleNext = async () => {
     try {
       await clientLogin({ email: email, password: pass })
       navigate('/client')
-    } catch(err) {
-      setResErr(true)
+    } catch (err) {
+      setResErr(<p>ログインに失敗しました</p>)
     }
   }
+
+  useEffect(() => {
+    if (pass.length > 1) return
+    setResErr(null)
+  }, [pass])
 
   // フェードインアニメーション
   useFadeIn()
@@ -45,11 +50,7 @@ export default function ClientLogin() {
           </label>
         </div>
 
-        {resErr && (
-          <p>
-            ログインに失敗しました。
-          </p>
-        )}
+        {resErr}
 
         <div className='btns fade_in'>
           <button className='btn_pre' onClick={() => navigate('/client/add')}>新規登録</button>

@@ -153,6 +153,7 @@ class Theme(models.Model):
   face_group = models.ForeignKey(FaceGroupName, on_delete=models.PROTECT, blank=True, null=True)
   title_style = models.JSONField(default=_title_style_default, blank=True, null=True)
   is_active = models.BooleanField(default=True)
+  origin_theme = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
   created_at = models.DateTimeField(auto_now_add=True)
   def __str__(self):
     base = f'{self.client.name} {self.name}'
