@@ -106,11 +106,13 @@ def payment_ehon_coupon(request):
     return Response({'error': 'bad request'}, status=400)
   log_obj = models.AnswerLog.objects.select_related('book__theme', 'theme').filter(id=log_id).first() if log_id else None
   if not log_obj:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'log not found'}, status=400)
   ex_book_obj = log_obj.book if log_obj else None
+  if not ex_book_obj:
+    return Response({'error': 'book not linked'}, status=400)
   theme_obj = ex_book_obj.theme if ex_book_obj else None
-  if not ex_book_obj or not theme_obj:
-    return Response({'error': 'bad request'}, status=400)
+  if not theme_obj:
+    return Response({'error': 'theme not found'}, status=400)
 
   if not log_obj.theme:
     log_obj.theme = theme_obj
