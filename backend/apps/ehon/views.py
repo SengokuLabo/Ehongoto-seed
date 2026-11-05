@@ -83,7 +83,8 @@ def generate(request):
 
   # ログ登録
   log_obj = models.AnswerLog.objects.create(
-    data = body
+    theme=theme_obj,
+    data = body,
   )
 
   # 2. AI文章生成（anthropic）※リトライ1回
@@ -350,7 +351,7 @@ def _book_coupon_purchase(session_obj):
 def ehon_data(request, token):
   # 購入済み絵本データ取得
   book_obj = models.Book.objects.select_related(
-      'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color', 'theme',
+      'hair', 'eye', 'nose', 'mouth', 'hair_color', 'skin_color', 'theme__client',
     ).filter(token=token).first()
   if not book_obj:
     return Response({'error': 'book not found'}, status=404)
@@ -401,6 +402,8 @@ def ehon_data(request, token):
     } for sp in spread_obj],
     'title_style': book_obj.theme.title_style,
     'log_id': log_obj.id if log_obj else None,
+    'client': book_obj.theme.client.name,
+    'theme': book_obj.theme.name,
     'price': price,
   }, status=200)
 

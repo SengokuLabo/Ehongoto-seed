@@ -104,13 +104,17 @@ def payment_ehon_coupon(request):
   log_id = body.get('log_id')
   if not log_id:
     return Response({'error': 'bad request'}, status=400)
-  log_obj = models.AnswerLog.objects.select_related('book', 'theme').filter(id=log_id).first() if log_id else None
+  log_obj = models.AnswerLog.objects.select_related('book__theme', 'theme').filter(id=log_id).first() if log_id else None
   if not log_obj:
     return Response({'error': 'bad request'}, status=400)
   ex_book_obj = log_obj.book if log_obj else None
-  theme_obj = log_obj.theme if log_obj else None
+  theme_obj = ex_book_obj.theme if ex_book_obj else None
   if not ex_book_obj or not theme_obj:
     return Response({'error': 'bad request'}, status=400)
+
+  if not log_obj.theme:
+    log_obj.theme = theme_obj
+    log_obj.save(update_fields=['theme',])
 
   # 2. 金額設定
   if book_type == models.Book.TYPE_PDF:
