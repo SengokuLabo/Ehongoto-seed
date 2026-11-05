@@ -127,7 +127,7 @@ def payment_ehon_coupon(request):
     price = theme_obj.price_hard
 
   # 3. pendingデータ登録
-  pending_obj = models.PendingBook.objects.update_or_create(
+  pending_obj, _ = models.PendingBook.objects.update_or_create(
     token=ex_book_obj.token,
     defaults={
       'data': {
