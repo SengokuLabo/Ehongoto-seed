@@ -85,25 +85,25 @@ def payment_ehon_coupon(request):
   try:
     body = json.loads(request.body)
   except json.JSONDecodeError:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'body not found'}, status=400)
 
   # 1. バリデーション
   book_type = body.get('type')
   if not book_type:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'book type error'}, status=400)
   types = [t[0] for t in models.Book.BOOK_TYPE]
   if book_type not in types:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'book type not found'}, status=400)
   buyer = body.get('buyer')
   if not buyer:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'buyer null'}, status=400)
   if not buyer.get('name'):
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'name error'}, status=400)
   if not buyer.get('email'):
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'email error'}, status=400)
   log_id = body.get('log_id')
   if not log_id:
-    return Response({'error': 'bad request'}, status=400)
+    return Response({'error': 'log id not found'}, status=400)
   log_obj = models.AnswerLog.objects.select_related('book__theme', 'theme').filter(id=log_id).first() if log_id else None
   if not log_obj:
     return Response({'error': 'log not found'}, status=400)
