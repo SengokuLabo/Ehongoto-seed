@@ -127,13 +127,15 @@ def payment_ehon_coupon(request):
     price = theme_obj.price_hard
 
   # 3. pendingデータ登録
-  pending_obj = models.PendingBook.objects.create(
+  pending_obj = models.PendingBook.objects.update_or_create(
     token=ex_book_obj.token,
-    data={
-      'type': book_type,
-      'theme_id': theme_obj.id,
-      'price': price,
-      'buyer': buyer,
+    defaults={
+      'data': {
+        'type': book_type,
+        'theme_id': theme_obj.id,
+        'price': price,
+        'buyer': buyer,
+      }
     })
 
   # 4. Stripe決済
