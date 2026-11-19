@@ -378,7 +378,10 @@ def _subsc_update(obj):
 
 # 毎月課金確認後の翌月クーポン配布処理
 def _coupon_reset(obj):
-  sp_sub_id = obj.get('subscription', '')
+  sp_sub_id = (
+    obj.get('subscription', '') or
+    obj.get('parent', {}).get('subscription_details', {}).get('subscription', '')
+  )
   c_subsc_obj = models.ClientSubsc.objects.filter(sp_sub_id=sp_sub_id).first()
   if not c_subsc_obj:
     return
