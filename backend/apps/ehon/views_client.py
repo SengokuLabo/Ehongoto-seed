@@ -724,7 +724,7 @@ def question_entry(request):
     # 4. 既存質問削除
     models.Question.objects.filter(theme=theme_obj).delete()
     models.Question.objects.bulk_create([
-      models.Question(theme=theme_obj, sort=i+1, chapter=q.get('chapter', ''), text=q.get('text', ''))
+      models.Question(theme=theme_obj, sort=i+1, chapter=q.get('chapter', None), text=q.get('text', ''))
       for i, q in enumerate(qs)
     ])
     return Response({'detail': 'ok!'}, status=200)

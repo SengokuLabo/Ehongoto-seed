@@ -34,12 +34,13 @@ export default function Question() {
         const order = []
         const map = {}
         data.questions.forEach(q => {
-          if (!map[q.chapter]) {
+          const key = q.chapter ?? ''
+          if (!map[key]) {
             // chapterが未登録の場合
-            map[q.chapter] = { title: q.chapter, questions: [] }
-            order.push(q.chapter)
+            map[key] = { title: key, questions: [] }
+            order.push(key)
           }
-          map[q.chapter].questions.push(q)
+          map[key].questions.push(q)
         })
         setChapters(order.map(t => map[t]))
         // スタイルセット
